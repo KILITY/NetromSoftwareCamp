@@ -10,3 +10,4 @@ public class Band
     
     public ICollection<Festival> Festivals { get; set; }
 }
+
