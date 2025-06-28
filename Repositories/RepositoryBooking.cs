@@ -4,9 +4,9 @@ using MyApplication.Interfaces;
 
 namespace MyApplication.Repositories;
 
-public class RepositoryBand : RepositoryBase<Band>, IRepositoryBand
+public class RepositoryBooking : RepositoryBase<Booking>, IRepositoryBooking
 {
-    public RepositoryBand(ShowTimeContext context) : base(context)
+    public RepositoryBooking(ShowTimeContext context) : base(context)
     {
         
     }

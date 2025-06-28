@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using MyApplication.Components;
 using MyApplication.Context;
+using MyApplication.Interfaces;
+using MyApplication.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +16,10 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddDbContext<ShowTimeContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DbConnectionString")));
+
+builder.Services.AddScoped<IRepositoryBand, RepositoryBand>();
+builder.Services.AddScoped<IRepositoryBooking, RepositoryBooking>();
+builder.Services.AddScoped<IRepositoryFestival, RepositoryFestival>();
 
 var app = builder.Build();
 
