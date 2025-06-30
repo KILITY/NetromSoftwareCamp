@@ -13,6 +13,7 @@ public interface IRepositoryBase<T> where T: class
     void Delete(T entity);
 
     Task SaveChangesAsync(T entity);
-    
-    
+
+    Task<bool> SaveAsync();
+
 }

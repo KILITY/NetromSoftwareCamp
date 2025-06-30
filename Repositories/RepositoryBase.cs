@@ -45,4 +45,9 @@ public class RepositoryBase<T> : IRepositoryBase<T> where T : class
     {
         await _context.SaveChangesAsync();
     }
+
+    public async Task<bool> SaveAsync()
+    {
+        return await _context.SaveChangesAsync() > 0;
+    }
 }

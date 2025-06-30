@@ -1,0 +1,54 @@
+@page "/CreateBand"
+@using MyApplication.Repositories
+@using MudBlazor
+@using MyApplication.Entities
+@using MyApplication.Enums
+@using MyApplication.Interfaces
+
+@inject IRepositoryBand RepositoryBand 
+
+<h3>Create a Band, You Rockstar!</h3>
+
+<MudCard>
+	<MudForm Model="@Band">
+		<MudCardContent>
+			<MudTextField @bind-Value="@Band.Name" 
+			              Label="Name" 
+			              Immediate="true"></MudTextField>
+			<MudSelect T="Genre" @bind-Value="@Band.Genre" Label="Genre" Immediate="true">
+					@foreach (Genre gen in Enum.GetValues(typeof(Genre)))
+					{
+						<MudSelectItem T="Genre" Value="@gen">@gen</MudSelectItem>
+					}
+			</MudSelect>
+			<MudButton Variant="Variant.Filled" @onclick="AddBand">Create Your Band!</MudButton>
+		</MudCardContent>
+	</MudForm>
+</MudCard>
+
+@code {
+
+	public Band Band { get; set; } = new Band()
+	{
+		Name = string.Empty,
+		Genre = 0,
+	};
+
+	private bool correct = false;
+	
+	private async Task AddBand()
+	{
+		try
+		{
+			await RepositoryBand.AddASync(Band);
+			await RepositoryBand.SaveChangesAsync(Band);
+
+			Band = new Band() { Name = "", Genre = 0 };
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error adding band: {ex.Message}");
+		}
+	}
+
+}

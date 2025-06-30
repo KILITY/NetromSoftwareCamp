@@ -2,7 +2,7 @@ namespace MyApplication.Enums;
 
 public enum Genre
 {
-    Jaz,
+    Jazz,
     Pop,
     Classical,
     Rock,
