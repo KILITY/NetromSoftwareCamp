@@ -1,0 +1,52 @@
+@page "/CreateFestival"
+@using MyApplication.Repositories
+@using MyApplication.Entities
+@using MyApplication.Interfaces
+
+@inject IRepositoryFestival RepositoryFestival 
+
+<h3>CreateFestival</h3>
+
+<MudCard>
+    <MudForm Model="@Festival">
+        <MudCardContent>
+            <MudTextField @bind-Value="Festival.Name" Label="Name" Immediate="true" />
+            <MudTextField @bind-Value="Festival.Description" Label="Description" Immediate="true" />
+            <MudTextField @bind-Value="Festival.Location" Label="Location" Immediate="true" />
+            
+            <MudDatePicker Label="StartDate" @bind-Date="@Festival.StartDate" ShowToolbar="false" />
+            <MudDatePicker Label="EndDate" @bind-Date="@Festival.EndDate" ShowToolbar="false" />
+            
+            <MudButton Variant="Variant.Filled" @onclick="AddFestival">Create Your Festival!</MudButton>
+        </MudCardContent>
+    </MudForm>
+</MudCard>
+
+@code {
+
+    public Festival Festival { get; set; } = new Festival()
+    {
+        Name = string.Empty,
+        Description = string.Empty,
+        Location = string.Empty,
+        StartDate = DateTime.Now,
+        EndDate = DateTime.Now,
+    };
+
+	
+    private async Task AddFestival()
+    {
+        try
+        {
+            await RepositoryFestival.AddASync(Festival);
+            await RepositoryFestival.SaveChangesAsync(Festival);
+
+            Festival = new Festival() { Name = "", Description = "", Location = "", StartDate = DateTime.Now, EndDate = DateTime.Now};
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding Festival: {ex.Message}");
+        }
+    }
+
+}

@@ -1,0 +1,35 @@
+@page "/FestivalList"
+@using MyApplication.Entities
+@using MyApplication.Interfaces
+@inject IRepositoryFestival RepositoryFestival
+
+@if (!Festival_existance)
+{
+    <h4>There are no Festivals! WHAT A BUMMER! Please contact an admin and tell him/her to do his/her job!</h4>
+}
+else
+{
+    <MudDataGrid Items="@Festivals.Take(4)">
+        <Columns>
+            <PropertyColumn Property="x => x.Id" Title="Nr" />
+            <PropertyColumn Property="x => x.Name" Title="Nume" />
+            <PropertyColumn Property="x => x.Description" Title="Description" />
+            <PropertyColumn Property="x => x.Location" Title="Location" />
+            <PropertyColumn Property="x => x.StartDate" Title="StartDate" />
+            <PropertyColumn Property="x => x.EndDate" Title="EndDate" />
+        </Columns>
+    </MudDataGrid>
+}
+
+@code { 
+    private IEnumerable<Festival> Festivals= new List<Festival>();
+
+    bool Festival_existance = false;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        Festivals = (await RepositoryFestival.GetAllAsync()).ToList();
+        if(Festivals.Any()) Festival_existance = true;
+
+    }
+}

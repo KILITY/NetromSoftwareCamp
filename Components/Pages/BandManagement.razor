@@ -1,0 +1,206 @@
+@page "/BandsManagement"
+@using MyApplication.Repositories
+@using MudBlazor
+@using MyApplication.Entities
+@using MyApplication.Enums
+@using MyApplication.Interfaces
+
+@inject IRepositoryBand RepositoryBand 
+
+<h3>Create a Band, You Rockstar!</h3>
+
+<MudCard> 
+    <MudForm Model="@Band">
+        <MudCardContent>
+            <MudTextField @bind-Value="@Band.Name" 
+                          Label="Name" 
+                          Immediate="true"></MudTextField>
+            <MudSelect T="Genre" @bind-Value="@Band.Genre" Label="Genre" Immediate="true">
+                @foreach (Genre gen in Enum.GetValues(typeof(Genre)))
+                {
+                    <MudSelectItem T="Genre" Value="@gen">@gen</MudSelectItem>
+                }
+            </MudSelect>
+            <MudButton Variant="Variant.Filled" @onclick="AddBand">Create Your Band!</MudButton>
+        </MudCardContent>
+    </MudForm>
+</MudCard>
+
+@code {  
+
+    public Band Band { get; set; } = new Band()
+    {
+        Name = string.Empty,
+        Genre = 0,
+    };
+	
+    private async Task AddBand()
+    {
+        try
+        {
+            await RepositoryBand.AddASync(Band);
+            await RepositoryBand.SaveChangesAsync(Band);
+
+            Band = new Band() { Name = "", Genre = 0 };
+            
+            Bands = (await RepositoryBand.GetAllAsync()).ToList();
+            BandsExist = Bands.Any();
+            StateHasChanged();
+            
+            ShowAlert = true;
+            AlertMessage = $"Created band '{Band.Name}' successfully.";
+            AlertSeverity = Severity.Success;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding band: {ex.Message}");
+        }
+    }
+
+}
+
+<h3>BandTable</h3>
+
+@if (!BandsExist)
+{
+    <h4>There are no Bands! Please contact an admin and tell him/her to do his/her job!</h4>
+}
+else
+{
+    @if (ShowAlert)
+    {
+        <MudAlert Severity="@AlertSeverity"
+                  Elevation="0"
+                  Dense="true"
+                  Variant="Variant.Filled"
+                  OnClose="() => ShowAlert = false">
+            @AlertMessage
+        </MudAlert>
+    }
+    <MudTable Items="@Bands.Take(4)" Filter="@FilterFunction">
+        <ToolBarContent>
+            <MudTextField @bind-Value="_searchString" Placeholder="Search Band" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Nr</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Genre</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Nr">@context.Id</MudTd>
+
+            <MudTd DataLabel="Name">
+                @if (EditingBand == context)
+                {
+                    <MudTextField @bind-Value="context.Name" Immediate="true"/>
+                }
+                else
+                {
+                    @context.Name
+                }
+            </MudTd>
+
+            <MudTd DataLabel="Genre">
+                @if (EditingBand == context)
+                {
+                    <MudSelect T="Genre" @bind-Value="context.Genre" Immediate="true">
+                        @foreach (Genre gen in Enum.GetValues(typeof(Genre)))
+                        {
+                            <MudSelectItem T="Genre" Value="@gen">@gen</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+                else
+                {
+                    @context.Genre
+                }
+            </MudTd>
+
+            <MudTd>
+                @if (EditingBand == context)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Primary" OnClick="() => SaveEdit(context)"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Color="Color.Secondary" OnClick="CancelEdit"/>
+                }
+                else
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="() => StartEdit(context)"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteBand(context)"/>
+                }
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code { 
+    private IEnumerable<Band> Bands= new List<Band>();
+    
+    private string? AlertMessage;
+    private Severity AlertSeverity;
+    private bool ShowAlert;
+
+    bool BandsExist = false;
+    private string _searchString = "";
+
+    private Band? EditingBand;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        Bands = (await RepositoryBand.GetAllAsync()).ToList();
+        BandsExist = Bands.Any();
+
+    }
+    
+    private bool FilterFunction(Band band)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        return band.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
+    }
+    
+    private async Task DeleteBand(Band band)
+    {
+        try
+        {
+            RepositoryBand.Delete(band);
+            await RepositoryBand.SaveChangesAsync(band);
+
+            Bands = (await RepositoryBand.GetAllAsync()).ToList();
+            StateHasChanged();
+            
+            ShowAlert = true;
+            AlertMessage = $"Deleted band '{band.Name}' successfully.";
+            AlertSeverity = Severity.Success;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting band: {ex.Message}");
+        }
+    }
+
+    private void StartEdit(Band band)
+    {
+        EditingBand = band;
+    }
+
+    private void CancelEdit()
+    {
+        EditingBand = null;
+    }
+
+    private async Task SaveEdit(Band band)
+    {
+        RepositoryBand.Update(band);
+        await RepositoryBand.SaveChangesAsync(band);
+
+        EditingBand = null;
+
+        ShowAlert = true;
+        AlertMessage = $"Updated band '{band.Name}' successfully.";
+        AlertSeverity = Severity.Success;
+
+        StateHasChanged();
+    }
+}
