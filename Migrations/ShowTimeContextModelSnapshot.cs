@@ -68,10 +68,7 @@ namespace MyApplication.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("FestivalId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("FestivalId1")
+                    b.Property<Guid>("FestivalId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("StartDate")
@@ -79,7 +76,7 @@ namespace MyApplication.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FestivalId1");
+                    b.HasIndex("FestivalId");
 
                     b.ToTable("Bookings");
                 });
@@ -94,7 +91,7 @@ namespace MyApplication.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("EndDate")
+                    b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Location")
@@ -105,8 +102,14 @@ namespace MyApplication.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("StartDate")
+                    b.Property<string>("PublicId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("URl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -132,7 +135,7 @@ namespace MyApplication.Migrations
                 {
                     b.HasOne("MyApplication.Entities.Festival", "Festival")
                         .WithMany("Bookings")
-                        .HasForeignKey("FestivalId1")
+                        .HasForeignKey("FestivalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

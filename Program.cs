@@ -4,6 +4,7 @@ using MyApplication.Components;
 using MyApplication.Context;
 using MyApplication.Interfaces;
 using MyApplication.Repositories;
+using MyApplication.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,7 @@ builder.Services.AddDbContext<ShowTimeContext>(options =>
 builder.Services.AddScoped<IRepositoryBand, RepositoryBand>();
 builder.Services.AddScoped<IRepositoryBooking, RepositoryBooking>();
 builder.Services.AddScoped<IRepositoryFestival, RepositoryFestival>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 var app = builder.Build();
 

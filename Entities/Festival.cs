@@ -9,6 +9,9 @@ public class Festival
     public DateTime? StartDate { get; set; } 
     public DateTime? EndDate { get; set; }
     
+    public string? URl { get; set; }
+    public string? PublicId { get; set; }
+    
     public ICollection<Band> Bands { get; set; }
     public ICollection<Booking> Bookings { get; set; }
 }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace MyApplication.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialShowTimeDb : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -32,8 +32,10 @@ namespace MyApplication.Migrations
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Location = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    URl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PublicId = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -72,15 +74,14 @@ namespace MyApplication.Migrations
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    FestivalId = table.Column<int>(type: "int", nullable: false),
-                    FestivalId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    FestivalId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Bookings", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Bookings_Festivals_FestivalId1",
-                        column: x => x.FestivalId1,
+                        name: "FK_Bookings_Festivals_FestivalId",
+                        column: x => x.FestivalId,
                         principalTable: "Festivals",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -92,9 +93,9 @@ namespace MyApplication.Migrations
                 column: "FestivalsId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Bookings_FestivalId1",
+                name: "IX_Bookings_FestivalId",
                 table: "Bookings",
-                column: "FestivalId1");
+                column: "FestivalId");
         }
 
         /// <inheritdoc />
