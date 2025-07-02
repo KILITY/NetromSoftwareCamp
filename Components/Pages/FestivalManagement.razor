@@ -4,7 +4,6 @@
 @using MyApplication.Entities
 @using MyApplication.Enums
 @using MyApplication.Interfaces
-
 @inject IRepositoryFestival RepositoryFestival 
 @inject ICloudinaryService CloudinaryService
 
@@ -14,30 +13,19 @@
     <MudForm Rounded = "true" Model="@Festival">
         <MudCardContent>
             <MudStack>
+                Festival Photo
                 <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
                     <ActivatorContent>
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.CloudUpload">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload">
                             Upload Files
                         </MudButton>
                     </ActivatorContent>
                 </MudFileUpload>
-                <MudTextField @bind-Value="@Festival.Name"
-                              Label="Name"
-                              Immediate="true">
-                </MudTextField>
-                <MudTextField @bind-Value="@Festival.Description"
-                              Label="Description"
-                              Immediate="true">
-                </MudTextField>
-                <MudTextField @bind-Value="@Festival.Location"
-                              Label="Location"
-                              Immediate="true">
-                </MudTextField>
+                <MudTextField @bind-Value="@Festival.Name" Label="Name" Immediate="true" />
+                <MudTextField @bind-Value="@Festival.Description" Label="Description" Immediate="true"/>
+                <MudTextField @bind-Value="@Festival.Location" Label="Location" Immediate="true"/>
                 <MudDatePicker Label="StartDate" @bind-Date="@Festival.StartDate" ShowToolbar="false"/>
                 <MudDatePicker Label="EndDate" @bind-Date="@Festival.EndDate" ShowToolbar="false"/>
-
                 <MudButton Variant="Variant.Filled" @onclick="AddFestival">Create Your Festival!</MudButton>
             </MudStack>
             </MudCardContent>
@@ -57,6 +45,11 @@
 
     private async Task UploadFiles(IBrowserFile? file)
     {
+        if(Festival.URl != null && Festival.PublicId != null)
+        {
+            await CloudinaryService.DeletePhotoAsync(Festival.PublicId);
+        }
+        
         var results = await CloudinaryService.UploadPhotoAsync(file);
         foreach (var result in results)
         {
@@ -114,13 +107,29 @@ else
         <RowTemplate>
             <MudTd DataLabel="Nr">@context.Id</MudTd>
             
-            <MudTd>
-                <MudImage Src="@context.URl" 
-                          Alt="Festival Image" 
-                          Style="width: 50px; height: 50px; object-fit: cover;" 
-                          Class="mud-image-rounded"/>
-            </MudTd>
-            
+            @if (EditingFestival == context)
+            {
+                    <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload"/>
+                                Upload Files
+                        </ActivatorContent>
+                    </MudFileUpload>
+                
+            }
+            else
+            {
+                <MudTd>
+                    <MudTooltip Text="" MaxWidth="500px">
+                        <ChildContent>
+                            <MudImage Src="@context.URl" Alt="Festival Image" Style="width: 50px; height: 50px; object-fit: cover;" Class="mud-image-rounded"/>
+                        </ChildContent>
+                        <TooltipContent>
+                            <MudImage Src="@context.URl" Alt="Festival Image Large Preview" Style="width: 300px; height: 300px; object-fit: cover;" Class="mud-image-rounded" />
+                        </TooltipContent>
+                    </MudTooltip>
+                </MudTd>
+            }
             <MudTd DataLabel="Name">
                 @if (EditingFestival == context)
                 {
@@ -223,7 +232,9 @@ else
     {
         try
         {
+            if(festival.PublicId != null)
             await CloudinaryService.DeletePhotoAsync(festival.PublicId);
+            
             RepositoryFestival.Delete(festival);
             await RepositoryFestival.SaveChangesAsync(festival);
 
