@@ -6,6 +6,7 @@
 @using MyApplication.Interfaces
 @inject IRepositoryFestival RepositoryFestival 
 @inject ICloudinaryService CloudinaryService
+@inject IDialogService DialogService
 
 <MudText Typo="Typo.h3" Align="Align.Center">CreateFestival</MudText>
 
@@ -120,7 +121,7 @@ else
             else
             {
                 <MudTd>
-                    <MudTooltip Text="" MaxWidth="500px">
+                    <MudTooltip Text="" MaxWidth="300px">
                         <ChildContent>
                             <MudImage Src="@context.URl" Alt="Festival Image" Style="width: 50px; height: 50px; object-fit: cover;" Class="mud-image-rounded"/>
                         </ChildContent>
@@ -194,7 +195,7 @@ else
                 else
                 {
                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="() => StartEdit(context)"/>
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteFestival(context)"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => ShowDeleteConfirmationDialog(context)"/>
                 }
             </MudTd>
         </RowTemplate>
@@ -226,6 +227,30 @@ else
             return true;
 
         return festival.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
+    }
+    
+    private async Task ShowDeleteConfirmationDialog(Festival festival)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Are you sure you want to delete '{festival.Name}'?" }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = false,
+        };
+
+        var dialog = DialogService.Show<ConfirmDialog>("Confirm Delete", parameters, options);
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteFestival(festival);
+        }
     }
     
     private async Task DeleteFestival(Festival festival)
