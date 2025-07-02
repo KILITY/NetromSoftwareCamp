@@ -15,6 +15,19 @@
         <MudCardContent>
             <MudStack>
                 Festival Photo
+                @if (!string.IsNullOrEmpty(_localImagePreviewUrl))
+                {
+                    <MudImage Src="@_localImagePreviewUrl" Alt="Local Image Preview" Style="width: 200px; height: 200px; object-fit: cover;" Class="mud-image-rounded" />
+                }
+                else if (!string.IsNullOrEmpty(Festival.URl))
+                {
+                    <MudImage Src="@Festival.URl" Alt="Uploaded Image Preview" Style="width: 200px; height: 200px; object-fit: cover;" Class="mud-image-rounded" />
+                }
+                else
+                {
+                    <MudImage Src="https://via.placeholder.com/200x200?text=No+Image" Alt="Placeholder" Style="width: 200px; height: 200px; object-fit: cover;" Class="mud-image-rounded" />
+                }
+                
                 <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
                     <ActivatorContent>
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload">
@@ -34,7 +47,8 @@
 </MudCard>
 
 @code {
-
+    private string? _localImagePreviewUrl;
+    
     public Festival Festival { get; set; } = new Festival()
     {
         Name = string.Empty,
@@ -46,6 +60,16 @@
 
     private async Task UploadFiles(IBrowserFile? file)
     {
+        if(file == null)
+            return;
+        
+        using var stream = file.OpenReadStream();
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var base64 = Convert.ToBase64String(ms.ToArray());
+        var format = file.ContentType; // e.g., "image/png"
+        _localImagePreviewUrl = $"data:{format};base64,{base64}";
+        
         if(Festival.URl != null && Festival.PublicId != null)
         {
             await CloudinaryService.DeletePhotoAsync(Festival.PublicId);
@@ -57,6 +81,10 @@
             Festival.URl = result.SecureUrl.AbsoluteUri;
             Festival.PublicId = result.PublicId;
         }
+
+        _localImagePreviewUrl = null;
+        
+        StateHasChanged();
     }
     
     private async Task AddFestival()
