@@ -46,72 +46,6 @@
     </MudForm>
 </MudCard>
 
-@code {
-    private string? _localImagePreviewUrl;
-    
-    public Festival Festival { get; set; } = new Festival()
-    {
-        Name = string.Empty,
-        Description = string.Empty,
-        Location = string.Empty,
-        StartDate = DateTime.Now,
-        EndDate = DateTime.Now,
-    };
-
-    private async Task UploadFiles(IBrowserFile? file)
-    {
-        if(file == null)
-            return;
-        
-        using var stream = file.OpenReadStream();
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
-        var base64 = Convert.ToBase64String(ms.ToArray());
-        var format = file.ContentType; // e.g., "image/png"
-        _localImagePreviewUrl = $"data:{format};base64,{base64}";
-        
-        if(Festival.URl != null && Festival.PublicId != null)
-        {
-            await CloudinaryService.DeletePhotoAsync(Festival.PublicId);
-        }
-        
-        var results = await CloudinaryService.UploadPhotoAsync(file);
-        foreach (var result in results)
-        {
-            Festival.URl = result.SecureUrl.AbsoluteUri;
-            Festival.PublicId = result.PublicId;
-        }
-
-        _localImagePreviewUrl = null;
-        
-        StateHasChanged();
-    }
-    
-    private async Task AddFestival()
-    {
-        try
-        {
-            await RepositoryFestival.AddASync(Festival);
-            await RepositoryFestival.SaveChangesAsync(Festival);
-
-            Festival = new Festival() { Name = "", Description = "", Location = "", StartDate = DateTime.Now, EndDate = DateTime.Now};
-            
-            Festivals = (await RepositoryFestival.GetAllAsync()).ToList();
-            FestivalsExist = Festivals.Any();
-            StateHasChanged();
-            
-            ShowAlert = true;
-            AlertMessage = $"Created festival '{Festival.Name}' successfully.";
-            AlertSeverity = Severity.Success;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error adding Festival: {ex.Message}");
-        }
-    }
-
-}
-
 <MudText Typo="Typo.h3" Align="Align.Center">Festival Table</MudText>
 
 @if (!FestivalsExist)
@@ -236,6 +170,7 @@ else
     private string? AlertMessage;
     private Severity AlertSeverity;
     private bool ShowAlert;
+    private string? _localImagePreviewUrl;
 
     bool FestivalsExist = false;
     private string _searchString = "";
@@ -329,6 +264,68 @@ else
 
         StateHasChanged();
     }
+    
+    public Festival Festival { get; set; } = new Festival()
+    {
+        Name = string.Empty,
+        Description = string.Empty,
+        Location = string.Empty,
+        StartDate = DateTime.Now,
+        EndDate = DateTime.Now,
+    };
+
+    private async Task UploadFiles(IBrowserFile? file)
+    {
+        if(file == null)
+            return;
+        
+        using var stream = file.OpenReadStream();
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var base64 = Convert.ToBase64String(ms.ToArray());
+        var format = file.ContentType; // e.g., "image/png"
+        _localImagePreviewUrl = $"data:{format};base64,{base64}";
+        
+        if(Festival.URl != null && Festival.PublicId != null)
+        {
+            await CloudinaryService.DeletePhotoAsync(Festival.PublicId);
+        }
+        
+        var results = await CloudinaryService.UploadPhotoAsync(file);
+        foreach (var result in results)
+        {
+            Festival.URl = result.SecureUrl.AbsoluteUri;
+            Festival.PublicId = result.PublicId;
+        }
+
+        _localImagePreviewUrl = null;
+        
+        StateHasChanged();
+    }
+    
+    private async Task AddFestival()
+    {
+        try
+        {
+            await RepositoryFestival.AddASync(Festival);
+            await RepositoryFestival.SaveChangesAsync(Festival);
+
+            Festival = new Festival() { Name = "", Description = "", Location = "", StartDate = DateTime.Now, EndDate = DateTime.Now};
+            
+            Festivals = (await RepositoryFestival.GetAllAsync()).ToList();
+            FestivalsExist = Festivals.Any();
+            StateHasChanged();
+            
+            ShowAlert = true;
+            AlertMessage = $"Created festival '{Festival.Name}' successfully.";
+            AlertSeverity = Severity.Success;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding Festival: {ex.Message}");
+        }
+    }
+    
 }
 
 @if (ShowAlert)
