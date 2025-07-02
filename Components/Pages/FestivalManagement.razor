@@ -92,7 +92,7 @@
 }
 else
 {
-    <MudTable Rounded = "true" Items="@Festivals.Take(4)" Filter="@FilterFunction" >
+    <MudTable Rounded = "true" Items="@Festivals" Filter="@FilterFunction" >
         <ToolBarContent>
             <MudTextField @bind-Value="_searchString" Placeholder="Search Festival" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
         </ToolBarContent>
