@@ -12,8 +12,8 @@ using MyApplication.Context;
 namespace MyApplication.Migrations
 {
     [DbContext(typeof(ShowTimeContext))]
-    [Migration("20250702082528_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250704071421_InitialMIgration")]
+    partial class InitialMIgration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,21 +24,6 @@ namespace MyApplication.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("BandFestival", b =>
-                {
-                    b.Property<Guid>("BandsId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("FestivalsId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("BandsId", "FestivalsId");
-
-                    b.HasIndex("FestivalsId");
-
-                    b.ToTable("BandFestival");
-                });
 
             modelBuilder.Entity("MyApplication.Entities.Band", b =>
                 {
@@ -56,6 +41,24 @@ namespace MyApplication.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Bands");
+                });
+
+            modelBuilder.Entity("MyApplication.Entities.BandFestival", b =>
+                {
+                    b.Property<Guid>("FestivalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BandId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("FestivalId", "BandId");
+
+                    b.HasIndex("BandId");
+
+                    b.ToTable("BandFestivals");
                 });
 
             modelBuilder.Entity("MyApplication.Entities.Booking", b =>
@@ -119,19 +122,23 @@ namespace MyApplication.Migrations
                     b.ToTable("Festivals");
                 });
 
-            modelBuilder.Entity("BandFestival", b =>
+            modelBuilder.Entity("MyApplication.Entities.BandFestival", b =>
                 {
-                    b.HasOne("MyApplication.Entities.Band", null)
-                        .WithMany()
-                        .HasForeignKey("BandsId")
+                    b.HasOne("MyApplication.Entities.Band", "Band")
+                        .WithMany("BandFestivals")
+                        .HasForeignKey("BandId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MyApplication.Entities.Festival", null)
-                        .WithMany()
-                        .HasForeignKey("FestivalsId")
+                    b.HasOne("MyApplication.Entities.Festival", "Festival")
+                        .WithMany("BandFestivals")
+                        .HasForeignKey("FestivalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Band");
+
+                    b.Navigation("Festival");
                 });
 
             modelBuilder.Entity("MyApplication.Entities.Booking", b =>
@@ -145,8 +152,15 @@ namespace MyApplication.Migrations
                     b.Navigation("Festival");
                 });
 
+            modelBuilder.Entity("MyApplication.Entities.Band", b =>
+                {
+                    b.Navigation("BandFestivals");
+                });
+
             modelBuilder.Entity("MyApplication.Entities.Festival", b =>
                 {
+                    b.Navigation("BandFestivals");
+
                     b.Navigation("Bookings");
                 });
 #pragma warning restore 612, 618

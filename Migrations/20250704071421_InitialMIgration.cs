@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace MyApplication.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMIgration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -43,24 +43,25 @@ namespace MyApplication.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "BandFestival",
+                name: "BandFestivals",
                 columns: table => new
                 {
-                    BandsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FestivalsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    FestivalId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BandId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Order = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_BandFestival", x => new { x.BandsId, x.FestivalsId });
+                    table.PrimaryKey("PK_BandFestivals", x => new { x.FestivalId, x.BandId });
                     table.ForeignKey(
-                        name: "FK_BandFestival_Bands_BandsId",
-                        column: x => x.BandsId,
+                        name: "FK_BandFestivals_Bands_BandId",
+                        column: x => x.BandId,
                         principalTable: "Bands",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_BandFestival_Festivals_FestivalsId",
-                        column: x => x.FestivalsId,
+                        name: "FK_BandFestivals_Festivals_FestivalId",
+                        column: x => x.FestivalId,
                         principalTable: "Festivals",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -88,9 +89,9 @@ namespace MyApplication.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_BandFestival_FestivalsId",
-                table: "BandFestival",
-                column: "FestivalsId");
+                name: "IX_BandFestivals_BandId",
+                table: "BandFestivals",
+                column: "BandId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bookings_FestivalId",
@@ -102,7 +103,7 @@ namespace MyApplication.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "BandFestival");
+                name: "BandFestivals");
 
             migrationBuilder.DropTable(
                 name: "Bookings");

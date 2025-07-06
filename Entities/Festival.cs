@@ -12,6 +12,6 @@ public class Festival
     public string? URl { get; set; }
     public string? PublicId { get; set; }
     
-    public ICollection<Band> Bands { get; set; }
+    public ICollection<BandFestival> BandFestivals { get; set; }
     public ICollection<Booking> Bookings { get; set; }
 }

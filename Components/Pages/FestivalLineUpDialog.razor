@@ -1,0 +1,264 @@
+@using MyApplication.Entities
+@using MyApplication.Interfaces
+@using MudBlazor.Components
+@inject IRepositoryBand RepositoryBand
+@inject IRepositoryBandFestival RepositoryBandFestival
+@inject IRepositoryFestival RepositoryFestival
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Manage Festival Line-up</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Class="mb-4">Drag bands between the lists to organize your festival line-up</MudText>
+
+        <MudDropContainer T="DropItem" Items="@_dropzoneItems" @ref="_container"
+                         ItemsSelector="@((item,dropzone) => item.Selector == dropzone)"
+                         ItemDropped="ItemUpdated" Class="d-flex flex-wrap flex-grow-1">
+            <ChildContent>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-3" Style="height: 400px; overflow-y: auto;">
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Available Bands (@_dropzoneItems.Count(i => i.Selector == "1"))</MudText>
+                            <MudDropZone T="DropItem" Identifier="1" Class="mud-height-full" AllowReorder="true" />
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-3" Style="height: 400px; overflow-y: auto;">
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Festival Line-up (@_dropzoneItems.Count(i => i.Selector == "2"))</MudText>
+                            <MudDropZone T="DropItem" Identifier="2" Class="mud-height-full" AllowReorder="true" />
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </ChildContent>
+            <ItemRenderer>
+                <MudPaper Elevation="2" Class="pa-2 ma-2">
+                    <MudText>@context.Name</MudText>
+                </MudPaper>
+            </ItemRenderer>
+        </MudDropContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save Line-up</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public Guid FestivalId { get; set; }
+
+    private MudDropContainer<DropItem> _container;
+    private List<DropItem> _dropzoneItems = new();
+    private List<Band> _allBands = new();
+    private List<BandFestival> _festivalBands = new();
+    private Festival _festival;
+    
+    // Class for drag-and-drop items
+    public class DropItem
+    {
+        public Guid Id { get; set; }         // Band ID
+        public string Name { get; set; }      // Band name
+        public string Selector { get; set; }  // 1 = Available, 2 = In Festival
+        public int Order { get; set; }        // Position in the lineup
+    }
+    
+    public class BandLineupItem
+    {
+        public Guid BandId { get; set; }
+        public int Order { get; set; }
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Task.Delay(50); // Small delay to ensure container is ready
+            await InvokeAsync(() => {
+                _container?.Refresh();
+                StateHasChanged();
+            });
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine($"FestivalLineUpDialog initialized with FestivalId: {FestivalId}");
+
+        try
+        {
+            // Get all bands
+            _allBands = (await RepositoryBand.GetAllAsync()).ToList();
+            Console.WriteLine($"Found {_allBands.Count} bands total");
+
+            // Get festival with its bands using the proper repository method
+            if (FestivalId != Guid.Empty)
+            {
+                _festival = await RepositoryFestival.GetWithBandsByIdAsync(FestivalId);
+                if (_festival != null && _festival.BandFestivals != null)
+                {
+                    _festivalBands = _festival.BandFestivals.ToList();
+                    Console.WriteLine($"Found {_festivalBands.Count} bands for festival {FestivalId}");
+                }
+                else
+                {
+                    Console.WriteLine($"Festival with ID {FestivalId} not found or has no bands");
+                    _festivalBands = new List<BandFestival>();
+                }
+            }
+
+            // Initialize the drop zones
+            LoadData();
+            StateHasChanged();
+            Console.WriteLine($"Loaded {_dropzoneItems.Count} items into drop zones");
+            Console.WriteLine($"Available bands: {_dropzoneItems.Count(i => i.Selector == "1")}");
+            Console.WriteLine($"Festival bands: {_dropzoneItems.Count(i => i.Selector == "2")}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in OnInitializedAsync: {ex}");
+        }
+    }
+
+    private void LoadData()
+    {
+        _dropzoneItems = new List<DropItem>();
+
+        // Add bands that are not in the festival to the available list (left side)
+        foreach (var band in _allBands)
+        {
+            if (FestivalId == Guid.Empty || !_festivalBands.Any(bf => bf.BandId == band.Id))
+            {
+                _dropzoneItems.Add(new DropItem
+                {
+                    Id = band.Id,
+                    Name = band.Name ?? "Unnamed Band",
+                    Order = 0,
+                    Selector = "1" // Available bands (left side)
+                });
+            }
+        }
+
+        // Add bands that are in the festival to the lineup list (right side)
+        if (FestivalId != Guid.Empty)
+        {
+            foreach (var bandFestival in _festivalBands.OrderBy(bf => bf.Order))
+            {
+                var band = _allBands.FirstOrDefault(b => b.Id == bandFestival.BandId);
+                if (band != null)
+                {
+                    _dropzoneItems.Add(new DropItem
+                    {
+                        Id = band.Id,
+                        Name = band.Name ?? "Unnamed Band",
+                        Order = bandFestival.Order,
+                        Selector = "2" // Festival lineup (right side)
+                    });
+                }
+            }
+        }
+    }
+
+    private void ItemUpdated(MudItemDropInfo<DropItem> dropItem)
+    {
+        // Update the selector (which dropzone the item is in)
+        dropItem.Item.Selector = dropItem.DropzoneIdentifier;
+
+        // Update orders for all items in the festival lineup zone
+        UpdateOrders();
+    }
+
+    private void UpdateOrders()
+    {
+        // Get all items in the festival lineup zone in their visual order
+        var lineupItems = _dropzoneItems
+            .Where(i => i.Selector == "2")
+            .ToList();
+
+        // Reassign order numbers sequentially
+        for (int i = 0; i < lineupItems.Count; i++)
+        {
+            lineupItems[i].Order = i + 1;
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (FestivalId != Guid.Empty)
+        {
+            // Get bands that need to be removed (were in festival but now in Available zone)
+            var bandsToRemove = _festivalBands
+                .Where(bf => !_dropzoneItems.Any(di =>
+                    di.Selector == "2" && di.Id == bf.BandId))
+                .ToList();
+
+            // Remove bands that are no longer in the lineup
+            foreach (var bandFestival in bandsToRemove)
+            {
+                RepositoryBandFestival.Delete(bandFestival);
+            }
+
+            // Get bands in the festival lineup (right side)
+            var lineupItems = _dropzoneItems
+                .Where(di => di.Selector == "2")
+                .OrderBy(di => di.Order)
+                .ToList();
+
+            // Process each band in the lineup
+            for (int i = 0; i < lineupItems.Count; i++)
+            {
+                var item = lineupItems[i];
+                int newOrder = i + 1; // Ensure sequential order starting from 1
+
+                // Check if this band is already in the festival
+                var existingBandFestival = _festivalBands.FirstOrDefault(bf => bf.BandId == item.Id);
+
+                if (existingBandFestival != null)
+                {
+                    if (existingBandFestival.Order != newOrder)
+                    {
+                        existingBandFestival.Order = newOrder;
+                        RepositoryBandFestival.Update(existingBandFestival);
+                    }
+                }
+                else
+                {
+                    // Add new band to festival
+                    var bandFestival = new BandFestival
+                    {
+                        BandId = item.Id,
+                        FestivalId = FestivalId,
+                        Order = newOrder
+                    };
+
+                    await RepositoryBandFestival.AddASync(bandFestival);
+                }
+            }
+
+            // Save all changes
+            BandFestival festivalu = await RepositoryBandFestival.GetByIdAsync(FestivalId);
+            await RepositoryBandFestival.SaveChangesAsync(festivalu);
+            
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+            // For a new festival, return the selected lineup bands
+            var selectedLineup = _dropzoneItems
+                .Where(di => di.Selector == "2")
+                .OrderBy(di => di.Order)
+                .Select(di => new BandLineupItem 
+                { 
+                    BandId = di.Id, 
+                    Order = di.Order 
+                })
+                .ToList();
+        
+            MudDialog.Close(DialogResult.Ok(selectedLineup));
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    
+}

@@ -7,6 +7,7 @@
 @inject IRepositoryFestival RepositoryFestival 
 @inject ICloudinaryService CloudinaryService
 @inject IDialogService DialogService
+@inject IRepositoryBandFestival RepositoryBandFestival
 
 <MudText Typo="Typo.h3" Align="Align.Center">CreateFestival</MudText>
 
@@ -35,10 +36,14 @@
                         </MudButton>
                     </ActivatorContent>
                 </MudFileUpload>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Event" OnClick="OpenLineupDialog">Manage Festival Line-up</MudButton>
                 <MudTextField @bind-Value="@Festival.Name" Label="Name" Required="true" RequiredError="Name is required"  />
                 <MudTextField @bind-Value="@Festival.Description" Label="Description" Required="true" RequiredError="Description is required" />
                 <MudTextField @bind-Value="@Festival.Location" Label="Location" Required="true" RequiredError="Location is required"/>
-                <MudDatePicker Label="StartDate" @bind-Date="@Festival.StartDate" ShowToolbar="false" Required="true" RequiredError="StartDate is required"/>
+                <MudDatePicker Label="StartDate" @bind-Date="@Festival.StartDate" ShowToolbar="false" Required="true" RequiredError="StartDate is required"
+                               Min="@DateTime.Today"
+                               Error="@(Festival.StartDate < DateTime.Today)"
+                               ErrorText="Start date must not be in the past! You Time Traveler!"/>
                 <MudDatePicker Label="EndDate" @bind-Date="@Festival.EndDate" ShowToolbar="false" Required="true" RequiredError="End date is required"
                                Min="@Festival.StartDate" 
                                Error="@(Festival.EndDate < Festival.StartDate)"
@@ -132,7 +137,7 @@ else
             <MudTd DataLabel="StartDate">
                 @if (EditingFestival == context)
                 {
-                    <MudDatePicker Label="StartDate" @bind-Date="@Festival.StartDate" ShowToolbar="false" />
+                    <MudDatePicker Label="StartDate" @bind-Date="@context.StartDate" ShowToolbar="false" />
                 }
                 else
                 {
@@ -143,7 +148,7 @@ else
             <MudTd DataLabel="EndDate">
                 @if (EditingFestival == context)
                 {
-                    <MudDatePicker Label="EndDate" @bind-Date="@Festival.EndDate" ShowToolbar="false" />
+                    <MudDatePicker Label="EndDate" @bind-Date="@context.EndDate" ShowToolbar="false" />
                 }
                 else
                 {
@@ -183,6 +188,31 @@ else
     private MudForm form;
     private bool success;
     
+    private List<FestivalLineUpDialog.BandLineupItem> _selectedLineup = new();
+    
+    private async Task OpenLineupDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "FestivalId", Festival.Id != Guid.Empty ? Festival.Id : Guid.Empty }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Large,
+            FullWidth = true,
+            CloseButton = true,
+        };
+
+        var dialog = DialogService.Show<FestivalLineUpDialog>("Manage Festival Line-up", parameters, options);
+        var result = await dialog.Result;
+        
+        if(!result.Canceled && Festival.Id == Guid.Empty)
+        {
+            _selectedLineup = result.Data as List<FestivalLineUpDialog.BandLineupItem>;
+        }
+    }
+    
     protected override async Task OnInitializedAsync()
     {
         Festivals = (await RepositoryFestival.GetAllAsync()).ToList();
@@ -192,10 +222,10 @@ else
     
     private bool FilterFunction(Festival festival)
     {
-        if (string.IsNullOrWhiteSpace(_searchString))
-            return true;
+    if (string.IsNullOrWhiteSpace(_searchString))
+    return true;
 
-        return festival.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
+    return festival.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
     }
     
     private async Task ShowDeleteConfirmationDialog(Festival festival)
@@ -292,16 +322,18 @@ else
         var format = file.ContentType; // e.g., "image/png"
         _localImagePreviewUrl = $"data:{format};base64,{base64}";
         
-        if(Festival.URl != null && Festival.PublicId != null)
-        {
-            await CloudinaryService.DeletePhotoAsync(Festival.PublicId);
-        }
+        var targetFestival = EditingFestival ?? Festival;
         
+        if(targetFestival.URl != null && targetFestival.PublicId != null)
+        {
+            await CloudinaryService.DeletePhotoAsync(targetFestival.PublicId);
+        }
+    
         var results = await CloudinaryService.UploadPhotoAsync(file);
         foreach (var result in results)
         {
-            Festival.URl = result.SecureUrl.AbsoluteUri;
-            Festival.PublicId = result.PublicId;
+            targetFestival.URl = result.SecureUrl.AbsoluteUri;
+            targetFestival.PublicId = result.PublicId;
         }
 
         _localImagePreviewUrl = null;
@@ -315,6 +347,24 @@ else
         {
             await RepositoryFestival.AddASync(Festival);
             await RepositoryFestival.SaveChangesAsync(Festival);
+            
+            if (_selectedLineup != null && _selectedLineup.Any())
+            {
+                foreach (var item in _selectedLineup)
+                {
+                    var bandFestival = new BandFestival
+                    {
+                        BandId = item.BandId,
+                        FestivalId = Festival.Id,
+                        Order = item.Order
+                    };
+                
+                    await RepositoryBandFestival.AddASync(bandFestival);
+                }
+            
+                // Save the band-festival relationships
+                await RepositoryBandFestival.SaveAsync();
+            }
 
             Festival = new Festival() { Name = "", Description = "", Location = "", StartDate = DateTime.Now, EndDate = DateTime.Now};
             
@@ -337,8 +387,9 @@ else
         await form.Validate();
         
         bool imageUploaded = !string.IsNullOrEmpty(_localImagePreviewUrl) || !string.IsNullOrEmpty(Festival.URl);
+        bool datesValid = Festival.StartDate >= DateTime.Today && Festival.EndDate > Festival.StartDate;
         
-        if (form.IsValid && imageUploaded)
+        if (form.IsValid && imageUploaded && datesValid)
         {
             await AddFestival();
         }
@@ -354,6 +405,18 @@ else
             if (!imageUploaded)
             {
                 errorMessage += " Upload a festival image.";
+            }
+            
+            if (!datesValid)
+            {
+                if (Festival.StartDate < DateTime.Today)
+                {
+                    errorMessage += " Start date must be today or later.";
+                }
+                if (Festival.EndDate <= Festival.StartDate)
+                {
+                    errorMessage += " End date must be after start date.";
+                }
             }
             
             ShowAlert = true;

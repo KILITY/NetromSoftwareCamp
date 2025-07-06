@@ -24,6 +24,7 @@ builder.Services.AddScoped<IRepositoryBand, RepositoryBand>();
 builder.Services.AddScoped<IRepositoryBooking, RepositoryBooking>();
 builder.Services.AddScoped<IRepositoryFestival, RepositoryFestival>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+builder.Services.AddScoped<IRepositoryBandFestival, RepositoryBandFestival>();
 
 var app = builder.Build();
 
