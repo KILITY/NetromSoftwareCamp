@@ -54,13 +54,12 @@
     private List<BandFestival> _festivalBands = new();
     private Festival _festival;
     
-    // Class for drag-and-drop items
     public class DropItem
     {
-        public Guid Id { get; set; }         // Band ID
-        public string Name { get; set; }      // Band name
+        public Guid Id { get; set; }         
+        public string Name { get; set; }     
         public string Selector { get; set; }  // 1 = Available, 2 = In Festival
-        public int Order { get; set; }        // Position in the lineup
+        public int Order { get; set; }        
     }
     
     public class BandLineupItem
@@ -69,11 +68,11 @@
         public int Order { get; set; }
     }
     
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender) //Needed to render the Bands in the drop zones
     {
         if (firstRender)
         {
-            await Task.Delay(50); // Small delay to ensure container is ready
+            await Task.Delay(50);
             await InvokeAsync(() => {
                 _container?.Refresh();
                 StateHasChanged();
@@ -91,7 +90,7 @@
             _allBands = (await RepositoryBand.GetAllAsync()).ToList();
             Console.WriteLine($"Found {_allBands.Count} bands total");
 
-            // Get festival with its bands using the proper repository method
+            // Get festival with its bands
             if (FestivalId != Guid.Empty)
             {
                 _festival = await RepositoryFestival.GetWithBandsByIdAsync(FestivalId);
@@ -124,7 +123,7 @@
     {
         _dropzoneItems = new List<DropItem>();
 
-        // Add bands that are not in the festival to the available list (left side)
+        // Add bands that are not in the festival to the available list
         foreach (var band in _allBands)
         {
             if (FestivalId == Guid.Empty || !_festivalBands.Any(bf => bf.BandId == band.Id))
@@ -175,7 +174,7 @@
         {
             if (_dropzoneItems[i].Selector == dropItem.DropzoneIdentifier)
             {
-                if (zoneCounter == dropItem.IndexInZone)
+                if (zoneCounter == dropItem.IndexInZone) //we check if the IndexInzone which is given by Mudblazor is the same as the zone counter, if yes it means we found the updated position
                 {
                     insertIndex = i;
                     break;
@@ -199,7 +198,7 @@
             .Where(i => i.Selector == "2")
             .ToList();
 
-        // Reassign order numbers sequentially
+        // Order becomes 1-indexed
         for (int i = 0; i < lineupItems.Count; i++)
         {
             lineupItems[i].Order = i + 1;
@@ -282,6 +281,4 @@
     }
 
     private void Cancel() => MudDialog.Cancel();
-
-    
 }
