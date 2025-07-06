@@ -40,7 +40,7 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Submit">Save Line-up</MudButton>
+        <MudButton Color="Color.Primary" OnClick="@Submit">Save Line-up</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -161,12 +161,36 @@
 
     private void ItemUpdated(MudItemDropInfo<DropItem> dropItem)
     {
-        // Update the selector (which dropzone the item is in)
+        // Remove from its old location
+        _dropzoneItems.Remove(dropItem.Item);
+
+        // Update target zone
         dropItem.Item.Selector = dropItem.DropzoneIdentifier;
 
-        // Update orders for all items in the festival lineup zone
+        // Compute insertion point inside the chosen drop zone
+        int insertIndex = _dropzoneItems.Count;
+        int zoneCounter = 0;
+
+        for (int i = 0; i < _dropzoneItems.Count; i++)
+        {
+            if (_dropzoneItems[i].Selector == dropItem.DropzoneIdentifier)
+            {
+                if (zoneCounter == dropItem.IndexInZone)
+                {
+                    insertIndex = i;
+                    break;
+                }
+                zoneCounter++;
+            }
+        }
+
+        // Insert item at calculated position
+        _dropzoneItems.Insert(insertIndex, dropItem.Item);
+
+        // Refresh order numbers for lineup items
         UpdateOrders();
     }
+
 
     private void UpdateOrders()
     {
