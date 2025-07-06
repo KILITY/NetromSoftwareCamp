@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MyApplication.Context;
 using MyApplication.Entities;
 using MyApplication.Interfaces;
@@ -9,5 +10,14 @@ public class RepositoryBandFestival : RepositoryBase<BandFestival>, IRepositoryB
     public RepositoryBandFestival(ShowTimeContext context) : base(context)
     {
         
+    }
+
+    public Task<List<Band>> GetBandsByFestivalIdAsync(Guid festivalId)
+    {
+        return Context.BandFestivals
+            .Where(bf => bf.FestivalId == festivalId)
+            .OrderBy(bf => bf.Order)
+            .Select(bf => bf.Band)
+            .ToListAsync();
     }
 }

@@ -36,7 +36,7 @@
                         </MudButton>
                     </ActivatorContent>
                 </MudFileUpload>
-                <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Event" OnClick="OpenLineupDialog">Manage Festival Line-up</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Event" OnClick="() => OpenLineupDialog(null)">Manage Festival Line-up</MudButton>
                 <MudTextField @bind-Value="@Festival.Name" Label="Name" Required="true" RequiredError="Name is required"  />
                 <MudTextField @bind-Value="@Festival.Description" Label="Description" Required="true" RequiredError="Description is required" />
                 <MudTextField @bind-Value="@Festival.Location" Label="Location" Required="true" RequiredError="Location is required"/>
@@ -74,6 +74,7 @@ else
             <MudTh>Location</MudTh>
             <MudTh>StartDate</MudTh>
             <MudTh>EndDate</MudTh>
+            <MudTh>Line-Up</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="Nr">@context.Id</MudTd>
@@ -155,6 +156,29 @@ else
                     @context.EndDate
                 }
             </MudTd>
+            
+            <MudTd>
+                @if (EditingFestival == context)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Event" OnClick="() => OpenLineupDialog(context)">Manage Festival Line-up</MudButton>
+                }
+                else
+                {
+                    @if (_festivalLineups.TryGetValue(context.Id, out var lineup) && lineup.Any())
+                    {
+                        @foreach (var band in lineup)
+                        {
+                            <MudChip T="object" Color="Color.Primary" Variant="Variant.Filled" Class="ma-1" Style="border-radius: 20px;">
+                                @($"{band.Order}. {band.Name}")
+                            </MudChip>
+                        }
+                    }
+                    else
+                    {
+                        <MudText Color="Color.Transparent">No bands</MudText>
+                    }
+                }
+            </MudTd>
 
             <MudTd>
                 @if (EditingFestival == context)
@@ -174,6 +198,7 @@ else
 
 @code { 
     private IEnumerable<Festival> Festivals= new List<Festival>();
+    private Dictionary<Guid, List<(int Order, string Name)>> _festivalLineups = new();
     
     private string? AlertMessage;
     private Severity AlertSeverity;
@@ -190,11 +215,12 @@ else
     
     private List<FestivalLineUpDialog.BandLineupItem> _selectedLineup = new();
     
-    private async Task OpenLineupDialog()
+    private async Task OpenLineupDialog(Festival? festival = null)
     {
+        var targetFestival = festival ?? Festival;
         var parameters = new DialogParameters
         {
-            { "FestivalId", Festival.Id != Guid.Empty ? Festival.Id : Guid.Empty }
+            { "FestivalId", targetFestival.Id != Guid.Empty ? targetFestival.Id : Guid.Empty }
         };
 
         var options = new DialogOptions
@@ -206,10 +232,27 @@ else
 
         var dialog = DialogService.Show<FestivalLineUpDialog>("Manage Festival Line-up", parameters, options);
         var result = await dialog.Result;
-        
-        if(!result.Canceled && Festival.Id == Guid.Empty)
+
+        if (!result.Canceled && Festival.Id == Guid.Empty)
         {
             _selectedLineup = result.Data as List<FestivalLineUpDialog.BandLineupItem>;
+        }
+
+        // For existing festival, refresh the table and line-ups after editing
+        if (!result.Canceled && festival != null)
+        {
+            Festivals = (await RepositoryFestival.GetAllAsync()).ToList();
+
+            // Reload the band line-ups for all festivals
+            _festivalLineups.Clear();
+            foreach (var fest in Festivals)
+            {
+                var bandFestivals = await RepositoryBandFestival.GetBandsByFestivalIdAsync(fest.Id);
+                var bandLineup = bandFestivals.Select((band, index) => (Order: index + 1, Name: band.Name)).ToList();
+                _festivalLineups[fest.Id] = bandLineup;
+            }
+
+            StateHasChanged();
         }
     }
     
@@ -218,6 +261,14 @@ else
         Festivals = (await RepositoryFestival.GetAllAsync()).ToList();
         FestivalsExist = Festivals.Any();
 
+        foreach (var festival in Festivals)
+        {
+            int i = 1;
+            var bandFestivals = await RepositoryBandFestival.GetBandsByFestivalIdAsync(festival.Id);
+            
+            var bandLineup = bandFestivals.Select((band, index) => (Order : index +1, Name : band.Name)).ToList();
+            _festivalLineups[festival.Id] = bandLineup;
+        }
     }
     
     private bool FilterFunction(Festival festival)

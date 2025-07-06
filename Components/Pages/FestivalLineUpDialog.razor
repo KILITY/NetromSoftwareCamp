@@ -260,8 +260,7 @@
             }
 
             // Save all changes
-            BandFestival festivalu = await RepositoryBandFestival.GetByIdAsync(FestivalId);
-            await RepositoryBandFestival.SaveChangesAsync(festivalu);
+            await RepositoryBandFestival.SaveAsync();
             
             MudDialog.Close(DialogResult.Ok(true));
         }
