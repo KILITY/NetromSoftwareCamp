@@ -1,7 +1,11 @@
+using MyApplication.Components.Account;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using MyApplication.Components;
 using MyApplication.Context;
+using MyApplication.Entities;
 using MyApplication.Interfaces;
 using MyApplication.Repositories;
 using MyApplication.Services;
@@ -18,7 +22,26 @@ builder.Services.AddRazorComponents()
 builder.Services.AddDbContext<ShowTimeContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DbConnectionString")));
 
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<IdentityUserAccessor>();
+builder.Services.AddScoped<IdentityRedirectManager>();
+builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = IdentityConstants.ApplicationScheme;
+        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+    })
+    .AddIdentityCookies();
+
+builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
+    .AddRoles<IdentityRole<Guid>>()
+    .AddEntityFrameworkStores<ShowTimeContext>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddAuthorizationCore();
 
 builder.Services.AddScoped<IRepositoryBand, RepositoryBand>();
 builder.Services.AddScoped<IRepositoryBooking, RepositoryBooking>();

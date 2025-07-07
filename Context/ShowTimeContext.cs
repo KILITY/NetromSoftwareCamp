@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using MyApplication.Entities;
 
 namespace MyApplication.Context
 {
-    public class ShowTimeContext : DbContext
+    public class ShowTimeContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
     {
         public ShowTimeContext(DbContextOptions<ShowTimeContext> options)
             : base(options)
