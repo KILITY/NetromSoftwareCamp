@@ -2,6 +2,7 @@ using MyApplication.Components.Account;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Routing;
 using MudBlazor.Services;
 using MyApplication.Components;
 using MyApplication.Context;
@@ -18,6 +19,7 @@ builder.Services.AddMudServices();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+    
 
 builder.Services.AddDbContext<ShowTimeContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DbConnectionString")));
@@ -42,6 +44,9 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddAuthorizationCore();
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddAntiforgery();
 
 builder.Services.AddScoped<IRepositoryBand, RepositoryBand>();
 builder.Services.AddScoped<IRepositoryBooking, RepositoryBooking>();
@@ -61,11 +66,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-
 app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+app.MapAdditionalIdentityEndpoints();
 
 app.Run();
