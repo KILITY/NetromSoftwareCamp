@@ -3,8 +3,9 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
-
+@using MudBlazor
 @using MyApplication.Entities
+@rendermode InteractiveServer
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject ILogger<Login> Logger
@@ -17,49 +18,57 @@
 <div class="row">
     <div class="col-lg-6">
         <section>
-            <StatusMessage Message="@errorMessage"/>
-            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator/>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Elevation="0">@errorMessage</MudAlert>
+            }
+            <MudForm @ref="form" Model="Input" OnValidSubmit="LoginUser">
                 <h2>Use a local account to log in.</h2>
-                <hr/>
-                <ValidationSummary class="text-danger" role="alert"/>
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com"/>
-                    <label for="Input.Email" class="form-label">Email</label>
-                    <ValidationMessage For="() => Input.Email" class="text-danger"/>
-                </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password"/>
-                    <label for="Input.Password" class="form-label">Password</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger"/>
-                </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label">
-                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input"/>
-                        Remember me
-                    </label>
-                </div>
+                <MudDivider Class="my-2" />
+                <MudTextField @bind-Value="Input.Email"
+                              Label="Email"
+                              For="@(() => Input.Email)"
+                              Required="true"
+                              RequiredError="Email is required"
+                              Variant="Variant.Filled"
+                              Margin="Margin.Normal"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Email"
+                              Class="mb-3"
+                              InputType="InputType.Email"
+                              />
+                <MudTextField @bind-Value="Input.Password"
+                              Label="Password"
+                              For="@(() => Input.Password)"
+                              Required="true"
+                              RequiredError="Password is required"
+                              Variant="Variant.Filled"
+                              Margin="Margin.Normal"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Lock"
+                              Class="mb-3"
+                              InputType="InputType.Password"
+                              />
+                <MudCheckBox T="bool" @bind-Checked="Input.RememberMe" Label="Remember me" Class="mb-3" />
+                <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary" Class="w-100 mb-2">Log in</MudButton>
                 <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <div>
                     <p>
-                        <a href="Account/ForgotPassword">Forgot your password?</a>
+                        <MudLink Href="Account/ForgotPassword">Forgot your password?</MudLink>
                     </p>
                     <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
+                        <MudLink Href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</MudLink>
                     </p>
                     <p>
-                        <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
+                        <MudLink Href="Account/ResendEmailConfirmation">Resend email confirmation</MudLink>
                     </p>
                 </div>
-            </EditForm>
+            </MudForm>
         </section>
     </div>
     <div class="col-lg-4 col-lg-offset-2">
         <section>
             <h3>Use another service to log in.</h3>
-            <hr/>
+            <MudDivider Class="my-2" />
             <ExternalLoginPicker/>
         </section>
     </div>
@@ -67,6 +76,7 @@
 
 @code {
     private string? errorMessage;
+    private MudForm? form;
 
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
@@ -76,7 +86,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        if (HttpContext != null && HttpMethods.IsGet(HttpContext.Request.Method))
         {
             // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
@@ -85,8 +95,6 @@
 
     public async Task LoginUser()
     {
-        // This doesn't count login failures towards account lockout
-        // To enable password failures to trigger account lockout, set lockoutOnFailure: true
         var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
         if (result.Succeeded)
         {
@@ -120,5 +128,4 @@
 
         [Display(Name = "Remember me?")] public bool RememberMe { get; set; }
     }
-
 }
