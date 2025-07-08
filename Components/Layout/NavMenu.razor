@@ -5,11 +5,16 @@
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
     <MudNavLink Href="BandList" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LibraryMusic">BandList</MudNavLink>
     <MudNavLink Href="CreateBand" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ControlPoint">Start Your Musical Legacy!</MudNavLink>
-    <MudNavLink Href="BandsManagement" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Build">Bands Management</MudNavLink>
+    
     <MudNavLink Href="FestivalList" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LibraryMusic">FestivalList</MudNavLink>
     <MudNavLink Href="CreateFestival" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ControlPoint">Want to host a Festival?</MudNavLink>
-    <MudNavLink Href="FestivalManagement " Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Build">Festival Management</MudNavLink>
-
+    <MudNavLink Href="UserRoles" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ControlPoint">UserRoles</MudNavLink>
+    
+    <AuthorizeView Roles="Admin">
+        <MudNavLink Href="BandsManagement" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Build">Bands Management</MudNavLink>
+        <MudNavLink Href="FestivalManagement " Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Build">Festival Management</MudNavLink>
+    </AuthorizeView>
+    
     <AuthorizeView>
         <Authorized>
             <div class="nav-item px-3">

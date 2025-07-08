@@ -1,0 +1,86 @@
+@page "/UserRoles"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using MyApplication.Entities
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<IdentityRole<Guid>> RoleManager
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [Authorize]
+
+<MudCard>
+    <MudCardHeader>
+        <MudText Typo="Typo.h5">Your User Roles</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (isLoading)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else
+        {
+            <MudText>Username: @username</MudText>
+            <MudDivider Class="my-2" />
+
+            <MudText Typo="Typo.subtitle1">Current Roles:</MudText>
+            @if (userRoles.Any())
+            {
+                <MudList T="string">
+                    @foreach (var role in userRoles)
+                    {
+                        <MudListItem Icon="@Icons.Material.Filled.Check">@role</MudListItem>
+                    }
+                </MudList>
+            }
+            else
+            {
+                <MudText>No roles assigned</MudText>
+            }
+
+            <MudDivider Class="my-4" />
+
+            <MudButton
+                Variant="Variant.Filled"
+                Color="Color.Primary"
+                OnClick="AddAdminRole"
+                Disabled="@(userRoles.Contains("Admin"))">
+                Add Admin Role
+            </MudButton>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private string username = string.Empty;
+    private List<string> userRoles = new();
+    private bool isLoading = true;
+    private ApplicationUser currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            username = user.Identity.Name;
+            currentUser = await UserManager.FindByNameAsync(username);
+            userRoles = (await UserManager.GetRolesAsync(currentUser)).ToList();
+        }
+
+        isLoading = false;
+    }
+
+    private async Task AddAdminRole()
+    {
+        if (!await RoleManager.RoleExistsAsync("Admin"))
+        {
+            await RoleManager.CreateAsync(new IdentityRole<Guid>("Admin"));
+        }
+
+        if (!userRoles.Contains("Admin"))
+        {
+            await UserManager.AddToRoleAsync(currentUser, "Admin");
+            userRoles = (await UserManager.GetRolesAsync(currentUser)).ToList();
+        }
+    }
+}
