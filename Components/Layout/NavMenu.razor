@@ -1,71 +1,74 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Components.Forms
 
-<MudNavMenu>
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    <MudNavLink Href="BandList" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LibraryMusic">BandList</MudNavLink>
-    <MudNavLink Href="CreateBand" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ControlPoint">Start Your Musical Legacy!</MudNavLink>
-    
-    <MudNavLink Href="FestivalList" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LibraryMusic">FestivalList</MudNavLink>
-    <MudNavLink Href="CreateFestival" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ControlPoint">Want to host a Festival?</MudNavLink>
-    <MudNavLink Href="UserRoles" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ControlPoint">UserRoles</MudNavLink>
-    
+<div class="d-flex flex-row align-center gap-2">
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home" Class="px-2">Home</MudNavLink>
+    <MudNavLink Href="BandList" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LibraryMusic" Class="px-2">BandList</MudNavLink>
+    <MudNavLink Href="CreateBand" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ControlPoint" Class="px-2">Start Your Musical Legacy!</MudNavLink>
+    <MudNavLink Href="FestivalList" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LibraryMusic" Class="px-2">FestivalList</MudNavLink>
+    <MudNavLink Href="CreateFestival" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ControlPoint" Class="px-2">Want to host a Festival?</MudNavLink>
+    <MudNavLink Href="UserRoles" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ControlPoint" Class="px-2">UserRoles</MudNavLink>
+
     <AuthorizeView Roles="Admin">
-        <MudNavLink Href="BandsManagement" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Build">Bands Management</MudNavLink>
-        <MudNavLink Href="FestivalManagement " Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Build">Festival Management</MudNavLink>
+        <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
+        <MudNavLink Href="BandsManagement" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Build" Class="px-2">Bands Management</MudNavLink>
+        <MudNavLink Href="FestivalManagement" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Build" Class="px-2">Festival Management</MudNavLink>
     </AuthorizeView>
-    
+
+    <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
+
     <AuthorizeView>
         <Authorized>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="Account/Manage">
-                    <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
-                </NavLink>
-            </div>
-            <div class="nav-item px-3">
-                <form action="Account/Logout" method="post">
+            <MudNavLink Href="Account/Manage" Class="px-2">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" />
+                @context.User.Identity?.Name
+            </MudNavLink>
+            <div class="d-inline">
+                <form action="Account/Logout" method="post" @formname="logout-form">
                     <AntiforgeryToken/>
                     <input type="hidden" name="ReturnUrl" value="@currentUrl"/>
-                    <button type="submit" class="nav-link">
-                        <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                    <button type="submit" class="mud-button-root mud-button mud-button-text mud-button-text-inherit mud-button-text-size-medium ml-2 px-2">
+                        <span class="mud-button-label">
+                            <span class="mud-icon-root mud-icon-size-medium mr-2">
+                                <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"></path></svg>
+                            </span>
+                            Logout
+                        </span>
                     </button>
                 </form>
             </div>
         </Authorized>
         <NotAuthorized>
-            <div class="nav-item px-3">
-                <MudNavLink class="nav-link" href="Account/Register">
-                    <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
-                </MudNavLink>
-            </div>
-            <div class="nav-item px-3">
-                <MudNavLink class="nav-link" href="Account/Login">
-                    <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
-                </MudNavLink>
-            </div>
+            <MudNavLink Href="Account/Register" Class="px-2">
+                <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="mr-2" />
+                Register
+            </MudNavLink>
+            <MudNavLink Href="Account/Login" Class="px-2">
+                <MudIcon Icon="@Icons.Material.Filled.Login" Class="mr-2" />
+                Login
+            </MudNavLink>
         </NotAuthorized>
     </AuthorizeView>
-    
-    </MudNavMenu>
+</div>
 
-    @code {
-        private string? currentUrl;
+@code {
+    private string? currentUrl;
 
-        protected override void OnInitialized()
-        {
-            currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-            NavigationManager.LocationChanged += OnLocationChanged;
-        }
-
-        private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-        {
-            currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
-            StateHasChanged();
-        }
-
-        public void Dispose()
-        {
-            NavigationManager.LocationChanged -= OnLocationChanged;
-        }
-
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
     }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

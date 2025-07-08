@@ -5,7 +5,6 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
-
 @using MyApplication.Entities
 
 @inject UserManager<ApplicationUser> UserManager
@@ -18,40 +17,62 @@
 
 <PageTitle>Register</PageTitle>
 
-<h1>Register</h1>
+<div class="mud-container">
+    <div class="mud-paper">
+        <h2 class="mud-typography mud-typography-h4">Register</h2>
 
-<div class="row">
-    <div class="col-lg-6">
-        <StatusMessage Message="@Message"/>
-        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
-            <DataAnnotationsValidator/>
-            <h2>Create a new account.</h2>
-            <hr/>
-            <ValidationSummary class="text-danger" role="alert"/>
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com"/>
-                <label for="Input.Email">Email</label>
-                <ValidationMessage For="() => Input.Email" class="text-danger"/>
+        @if (!string.IsNullOrEmpty(Message))
+        {
+            <div class="mud-alert mud-alert-error">@Message</div>
+        }
+
+        <EditForm Model="Input" method="post" OnValidSubmit="RegisterUser" FormName="register">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="mud-validation-summary" />
+
+            <div class="mud-form-field">
+                <InputText @bind-Value="Input.Email"
+                           id="Input.Email"
+                           class="mud-input"
+                           autocomplete="username"
+                           aria-required="true"
+                           placeholder="Email" />
+                <label for="Input.Email" class="mud-label">Email</label>
+                <ValidationMessage For="() => Input.Email" class="mud-validation-message" />
             </div>
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password"/>
-                <label for="Input.Password">Password</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger"/>
+
+            <div class="mud-form-field">
+                <InputText type="password"
+                           @bind-Value="Input.Password"
+                           id="Input.Password"
+                           class="mud-input"
+                           autocomplete="new-password"
+                           aria-required="true"
+                           placeholder="Password" />
+                <label for="Input.Password" class="mud-label">Password</label>
+                <ValidationMessage For="() => Input.Password" class="mud-validation-message" />
             </div>
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password"/>
-                <label for="Input.ConfirmPassword">Confirm Password</label>
-                <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger"/>
+
+            <div class="mud-form-field">
+                <InputText type="password"
+                           @bind-Value="Input.ConfirmPassword"
+                           id="Input.ConfirmPassword"
+                           class="mud-input"
+                           autocomplete="new-password"
+                           aria-required="true"
+                           placeholder="Confirm Password" />
+                <label for="Input.ConfirmPassword" class="mud-label">Confirm Password</label>
+                <ValidationMessage For="() => Input.ConfirmPassword" class="mud-validation-message" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+
+            <button type="submit" class="mud-button mud-button-filled mud-button-primary">
+                Register
+            </button>
+
+            <div class="mud-links">
+                <a href="/Account/Login" class="mud-link">Already have an account? Log in</a>
+            </div>
         </EditForm>
-    </div>
-    <div class="col-lg-4 col-lg-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr/>
-            <ExternalLoginPicker/>
-        </section>
     </div>
 </div>
 
@@ -64,7 +85,7 @@
 
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
 
-    public async Task RegisterUser(EditContext editContext)
+    public async Task RegisterUser()
     {
         var user = CreateUser();
 
@@ -142,5 +163,4 @@
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; } = "";
     }
-
 }
