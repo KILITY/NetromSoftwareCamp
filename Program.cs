@@ -66,6 +66,9 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();      // <--- Add this
+app.UseAuthorization();       // <--- Add this
+
 app.UseAntiforgery();
 
 app.MapStaticAssets();
