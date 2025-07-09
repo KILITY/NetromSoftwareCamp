@@ -4,8 +4,45 @@
 @inject IRepositoryBand RepositoryBand
 @inject IRepositoryBandFestival RepositoryBandFestival
 @inject IRepositoryFestival RepositoryFestival
+@inject IDialogService DialogService
 
+<MudDialog>
+    @if (festival != null)
+    {
+        <MudDialogTitle>@festival.Name</MudDialogTitle>
+        <MudDialogContent>
+            <p>@festival.Description</p>
+            <p><b>Location:</b> @festival.Location</p>
+            <p><b>Dates:</b> @festival.StartDate?.ToShortDateString() - @festival.EndDate?.ToShortDateString()</p>
+        </MudDialogContent>
+    }
+    else
+    {
+        <MudDialogTitle>Festival Details</MudDialogTitle>
+        <MudDialogContent>
+            <p>No festival data available</p>
+        </MudDialogContent>
+    }
+    <MudDialogActions>
+        <MudButton OnClick="Cancel">Close</MudButton>
+    </MudDialogActions>
+</MudDialog>
 
 @code {
+    [Parameter] public Guid FestivalID { get; set; }
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
     
+    private Festival festival { get; set; }
+    
+    
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine($"[FestivalDialog] Received FestivalID: {FestivalID}");
+        if (FestivalID != Guid.Empty)
+        {
+            festival = await RepositoryFestival.GetByIdAsync(FestivalID);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
 }
