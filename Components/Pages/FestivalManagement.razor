@@ -40,6 +40,7 @@
                 <MudTextField @bind-Value="@Festival.Name" Label="Name" Required="true" RequiredError="Name is required"  />
                 <MudTextField @bind-Value="@Festival.Description" Label="Description" Required="true" RequiredError="Description is required" />
                 <MudTextField @bind-Value="@Festival.Location" Label="Location" Required="true" RequiredError="Location is required"/>
+                <MudTextField @bind-Value="@Festival.Price" Label="Price" Required="false"/>
                 <MudDatePicker Label="StartDate" @bind-Date="@Festival.StartDate" ShowToolbar="false" Required="true" RequiredError="StartDate is required"
                                Min="@DateTime.Today"
                                Error="@(Festival.StartDate < DateTime.Today)"
@@ -67,17 +68,16 @@ else
             <MudTextField @bind-Value="_searchString" Placeholder="Search Festival" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
         </ToolBarContent>
         <HeaderContent>
-            <MudTh>Nr</MudTh>
             <MudTh>Photo</MudTh>
             <MudTh>Name</MudTh>
             <MudTh>Description</MudTh>
             <MudTh>Location</MudTh>
+            <MudTh>Price</MudTh>
             <MudTh>StartDate</MudTh>
             <MudTh>EndDate</MudTh>
             <MudTh>Line-Up</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="Nr">@context.Id</MudTd>
             
             @if (EditingFestival == context)
             {
@@ -132,6 +132,17 @@ else
                 else
                 {
                     @context.Location
+                }
+            </MudTd>
+            
+            <MudTd DataLabel="Price">
+                @if (EditingFestival == context)
+                {
+                    <MudTextField @bind-Value="context.Price" Immediate="true" Adornment="Adornment.End" AdornmentText="RON"/>
+                }
+                else
+                {
+                    @($"{context.Price} RON")
                 }
             </MudTd>
             

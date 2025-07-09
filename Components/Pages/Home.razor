@@ -1,10 +1,12 @@
 ﻿@page "/"
 
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
 @using MyApplication.Interfaces
 @using MyApplication.Entities
 @inject IRepositoryFestival FestivalRepository
 @inject ICloudinaryService CloudinaryService
 @inject IDialogService DialogService
+@inject NavigationManager Navigation
 
 <MudText Typo="Typo.h2">Suggested Festivals. Try Clicking One!</MudText>
 @if (Festivals != null && Festivals.Count > 0)
@@ -14,13 +16,40 @@
         {
             <MudCarouselItem>
                 <div class="d-flex justify-center align-center" style="height:100%; width:100%;">
-                    <img src="@CloudinaryService.GetTransformedImageUrl(festival.PublicId!, 2000, 350)"
+                    <img src="@CloudinaryService.GetTransformedImageUrl(festival.PublicId!, 1200, 350)"
                          style="width:100%; height:100%; object-fit:contain; cursor:pointer;"
                          @onclick="() => OnImageClick(festival)" />
                 </div>
             </MudCarouselItem>
         }
     </MudCarousel>
+    
+    <MudGrid Class="mt-6">
+        @foreach (var festival in Festivals)
+        {
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudCard Style="width:100%; min-height:350px;">
+                    <MudCardMedia Image="@CloudinaryService.GetTransformedImageUrl(festival.PublicId!, 350, 200)" Height="200" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5">@festival.Name</MudText>
+                        <MudText Typo="Typo.body2">@festival.Description</MudText>
+                        <MudText Typo="Typo.body2">@festival.Location</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary"
+                                   OnClick="@(() => Navigation.NavigateTo($"/book/{festival.Id}"))">
+                            <MudIcon Icon="@Icons.Material.Filled.Book" /> Book
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary"
+                                   OnClick="() => OnImageClick(festival)">
+                            Learn more
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+    }
 }
 
 @code {

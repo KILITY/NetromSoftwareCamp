@@ -12,8 +12,14 @@
 
     <AuthorizeView Roles="Admin">
         <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
-        <MudNavLink Href="BandsManagement" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Build" Class="px-2">Bands Management</MudNavLink>
-        <MudNavLink Href="FestivalManagement" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Build" Class="px-2">Festival Management</MudNavLink>
+        <MudMenu Icon="@Icons.Material.Filled.AdminPanelSettings" Color="Color.Inherit" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+            <MudMenuItem Href="BandsManagement">
+                <MudIcon Icon="@Icons.Material.Filled.Build" Class="mr-2" /> Bands Management
+            </MudMenuItem>
+            <MudMenuItem Href="FestivalManagement">
+                <MudIcon Icon="@Icons.Material.Filled.Build" Class="mr-2" /> Festival Management
+            </MudMenuItem>
+        </MudMenu>
     </AuthorizeView>
 
     <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />

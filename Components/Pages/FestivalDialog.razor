@@ -6,50 +6,79 @@
 @inject IRepositoryFestival RepositoryFestival
 @inject IDialogService DialogService
 
+<div class="mud-container">
+    <div class="mud-paper" style="max-width:500px;margin:auto;">
+        <h2 class="mud-typography mud-typography-h4 mud-text-center mb-4">Festival Details</h2>
 
-<MudDialog>
-    <DialogContent>
-        <MudImage Src="@festival.URl" Rounded ="true"></MudImage>
-        <MudText Typo="Typo.h6" Align="Align.Center">@festival.Name</MudText>
-        <MudText Typo="Typo.body1">Description:</MudText>
-        <MudText Typo="Typo.body1">@festival.Description</MudText>
-        <MudText Typo="Typo.body1">Location:</MudText>
-        <MudText Typo="Typo.body1">@festival.Location</MudText>
-        <MudText Typo="Typo.body1">Time Frame</MudText>
-        <MudText Typo="Typo.body1" Align="Align.Center" Class="d-flex justify-center align-center gap-2">
-            <MudChip T="string" Color="Color.Primary" Size="Size.Small">
-                @(Convert.ToDateTime(festival.StartDate).ToString("dd-MM-yyyy"))
-            </MudChip>
-            <span>to</span>
-            <MudChip T="string" Color="Color.Primary" Size="Size.Small">
-                @(Convert.ToDateTime(festival.EndDate).ToString("dd-MM-yyyy"))
-            </MudChip>
-        </MudText>
-    </DialogContent>
-    <DialogActions>
-        <MudButton>
-            Book Now!
-        </MudButton>
-        <MudButton OnClick="@(() => MudDialog.Cancel())">
-            Cancel
-        </MudButton>
-    </DialogActions>
-</MudDialog>
-    
+        <div class="mud-form-field mud-text-center mb-3">
+            <MudImage Src="@festival.URl" Rounded="true" Style="max-width: 100%; height: auto;" />
+        </div>
+
+        <div class="mud-form-field">
+            <span class="mud-label">Name</span>
+            <div class="mud-typography mud-typography-h6">@festival.Name</div>
+        </div>
+
+        <div class="mud-form-field">
+            <span class="mud-label">Description</span>
+            <div class="mud-typography mud-typography-body1">@festival.Description</div>
+        </div>
+
+        <div class="mud-form-field">
+            <span class="mud-label">Location</span>
+            <div class="mud-typography mud-typography-body1">@festival.Location</div>
+        </div>
+
+        <div class="mud-form-field">
+            <span class="mud-label">Time Frame</span>
+            <div class="mud-typography mud-typography-body1 d-flex justify-center align-center gap-2">
+                <MudChip T="string" Color="Color.Primary" Size="Size.Small">
+                    @(Convert.ToDateTime(festival.StartDate).ToString("dd-MM-yyyy"))
+                </MudChip>
+                <span>to</span>
+                <MudChip T="string" Color="Color.Primary" Size="Size.Small">
+                    @(Convert.ToDateTime(festival.EndDate).ToString("dd-MM-yyyy"))
+                </MudChip>
+            </div>
+        </div>
+
+        @if (lineUp != null && lineUp.Count > 0)
+        {
+            <div class="mud-form-field">
+                <span class="mud-label">Line-up</span>
+                <MudList T="Band">
+                    @foreach (var band in lineUp)
+                    {
+                        <MudListItem T="Band">@band.Name</MudListItem>
+                    }
+                </MudList>
+            </div>
+        }
+
+        <div class="d-flex justify-center gap-2 mt-4">
+            <button class="mud-button mud-button-filled mud-button-primary" @onclick="() => { /* Book action here */ }">
+                Book Now!
+            </button>
+            <button class="mud-button mud-button-filled" @onclick="Cancel">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
 
 @code {
     [Parameter] public Guid FestivalID { get; set; }
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
-    
+
     private Festival festival { get; set; }
-    
-    
+    private List<Band> lineUp { get; set; } = new();
+
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine($"[FestivalDialog] Received FestivalID: {FestivalID}");
         if (FestivalID != Guid.Empty)
         {
             festival = await RepositoryFestival.GetByIdAsync(FestivalID);
+            lineUp = await RepositoryBandFestival.GetBandsByFestivalIdAsync(FestivalID);
         }
     }
 
