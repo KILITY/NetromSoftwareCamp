@@ -8,5 +8,7 @@ namespace MyApplication.Interfaces
     {
         Task<List<ImageUploadResult>> UploadPhotoAsync(IBrowserFile? file);
         Task<DeletionResult> DeletePhotoAsync(string publicId);
+        
+        string GetTransformedImageUrl(string publicId, int width, int height);
     }
 }

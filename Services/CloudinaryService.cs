@@ -47,5 +47,10 @@ namespace MyApplication.Services
             return await _cloudinary.DestroyAsync(deletionParams);
         }
 
+        public string GetTransformedImageUrl(string publicId, int width, int height)
+        {
+            var cloudname = _cloudinary.Api.Account.Cloud;
+            return $"https://res.cloudinary.com/dcaewa1m7/image/upload/w_{width},h_{height},c_scale,f_auto/{publicId}";
+        }
     }
 }
