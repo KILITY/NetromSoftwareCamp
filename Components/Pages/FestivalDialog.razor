@@ -1,32 +1,41 @@
 @using MyApplication.Entities
 @using MyApplication.Interfaces
-@using MudBlazor.Components
+@using MudBlazor
 @inject IRepositoryBand RepositoryBand
 @inject IRepositoryBandFestival RepositoryBandFestival
 @inject IRepositoryFestival RepositoryFestival
 @inject IDialogService DialogService
 
+
 <MudDialog>
-    @if (festival != null)
-    {
-        <MudDialogTitle>@festival.Name</MudDialogTitle>
-        <MudDialogContent>
-            <p>@festival.Description</p>
-            <p><b>Location:</b> @festival.Location</p>
-            <p><b>Dates:</b> @festival.StartDate?.ToShortDateString() - @festival.EndDate?.ToShortDateString()</p>
-        </MudDialogContent>
-    }
-    else
-    {
-        <MudDialogTitle>Festival Details</MudDialogTitle>
-        <MudDialogContent>
-            <p>No festival data available</p>
-        </MudDialogContent>
-    }
-    <MudDialogActions>
-        <MudButton OnClick="Cancel">Close</MudButton>
-    </MudDialogActions>
+    <DialogContent>
+        <MudImage Src="@festival.URl" Rounded ="true"></MudImage>
+        <MudText Typo="Typo.h6" Align="Align.Center">@festival.Name</MudText>
+        <MudText Typo="Typo.body1">Description:</MudText>
+        <MudText Typo="Typo.body1">@festival.Description</MudText>
+        <MudText Typo="Typo.body1">Location:</MudText>
+        <MudText Typo="Typo.body1">@festival.Location</MudText>
+        <MudText Typo="Typo.body1">Time Frame</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center" Class="d-flex justify-center align-center gap-2">
+            <MudChip T="string" Color="Color.Primary" Size="Size.Small">
+                @(Convert.ToDateTime(festival.StartDate).ToString("dd-MM-yyyy"))
+            </MudChip>
+            <span>to</span>
+            <MudChip T="string" Color="Color.Primary" Size="Size.Small">
+                @(Convert.ToDateTime(festival.EndDate).ToString("dd-MM-yyyy"))
+            </MudChip>
+        </MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton>
+            Book Now!
+        </MudButton>
+        <MudButton OnClick="@(() => MudDialog.Cancel())">
+            Cancel
+        </MudButton>
+    </DialogActions>
 </MudDialog>
+    
 
 @code {
     [Parameter] public Guid FestivalID { get; set; }
