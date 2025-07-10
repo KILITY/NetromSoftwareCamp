@@ -12,8 +12,8 @@ using MyApplication.Context;
 namespace MyApplication.Migrations
 {
     [DbContext(typeof(ShowTimeContext))]
-    [Migration("20250709194602_FestivalPrice")]
-    partial class FestivalPrice
+    [Migration("20250710121312_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -1,3 +1,4 @@
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
 @using MyApplication.Entities
 @using MyApplication.Interfaces
 @using MudBlazor
@@ -5,6 +6,7 @@
 @inject IRepositoryBandFestival RepositoryBandFestival
 @inject IRepositoryFestival RepositoryFestival
 @inject IDialogService DialogService
+@inject NavigationManager Navigation
 
 <div class="mud-container">
     <div class="mud-paper" style="max-width:500px;margin:auto;">
@@ -56,7 +58,7 @@
         }
 
         <div class="d-flex justify-center gap-2 mt-4">
-            <button class="mud-button mud-button-filled mud-button-primary" @onclick="() => { /* Book action here */ }">
+            <button class="mud-button mud-button-filled mud-button-primary" @onclick="@(() => Navigation.NavigateTo($"/book/{festival.Id}"))">
                 Book Now!
             </button>
             <button class="mud-button mud-button-filled" @onclick="Cancel">
