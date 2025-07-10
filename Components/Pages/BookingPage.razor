@@ -1,4 +1,3 @@
-@page "/book"
 @page "/book/{FestivalId:guid}"
 @using Microsoft.AspNetCore.Components.Authorization
 @using MyApplication.Entities
@@ -6,27 +5,24 @@
 @inject IRepositoryFestival FestivalRepository
 @inject IRepositoryBooking BookingRepository
 @inject ISnackbar Snackbar
-@inject IRepositoryBandFestival RepositoryBandFestival
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 
 <h3>Booking</h3>
 
 <MudPaper Class="pa-4" Elevation="2" Style="margin:auto; max-width:500px;">
-    <EditForm Model="@bookingModel" OnValidSubmit="ConfirmBooking">
+    <EditForm Model="@bookingModel">
         <MudStack Spacing="2">
-            @if (FestivalId == Guid.Empty)
-            {
-                <MudAutocomplete T="Festival"
-                                 Label="What Festival do you want to book?"
-                                 @bind-Value="selectedFestival"
-                                 ToStringFunc="f => f?.Name"
-                                 SearchFunc="SearchFestivals"
-                                 ResetValueOnEmptyText="true"
-                                 Clearable="true"
-                                 Required="true"
-                                 OnValueChanged="OnFestivalChanged" />
-            }
+            <MudAutocomplete T="Festival"
+                             Label="Select Festival"
+                             @bind-Value="selectedFestival"
+                             @bind-Value:event="OnFestivalChanged"
+                             ToStringFunc="f => f?.Name"
+                             SearchFunc="SearchFestivals"
+                             ResetValueOnEmptyText="true"
+                             Clearable="true"
+                             Required="true"
+                             Disabled="FestivalId != Guid.Empty" />
 
             @if (selectedFestival != null)
             {
@@ -40,26 +36,14 @@
                         <MudText Typo="Typo.body2">
                             Time: @selectedFestival.StartDate?.ToString("dd-MM-yyyy") - @selectedFestival.EndDate?.ToString("dd-MM-yyyy")
                         </MudText>
-                        @if (lineUp?.Count > 0)
-                        {
-                            <MudText Typo="Typo.body2">Line-up:</MudText>
-                            <MudList T="Band">
-                                @foreach (var band in lineUp)
-                                {
-                                    <MudListItem>@band.Name</MudListItem>
-                                }
-                            </MudList>
-                        }
                     </MudCardContent>
                 </MudCard>
             }
 
-            <!-- Email field removed: email is set automatically -->
-
             <MudButton Variant="Variant.Filled"
                        Color="Color.Primary"
                        Disabled="!CanBook"
-                       Type="Submit">
+                       OnClick="ConfirmBooking">
                 Confirm Booking
             </MudButton>
         </MudStack>
@@ -71,14 +55,12 @@
 
     private Festival? selectedFestival;
     private List<Festival> allFestivals = new();
-    private List<Band> lineUp = new();
     private MyApplication.Entities.Booking bookingModel = new MyApplication.Entities.Booking();
 
     protected override async Task OnInitializedAsync()
     {
         allFestivals = (await FestivalRepository.GetAllAsync()).ToList();
 
-        // Get user email and set it in bookingModel
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         bookingModel.Email = user.Identity?.IsAuthenticated == true
@@ -88,7 +70,16 @@
         if (FestivalId != Guid.Empty)
         {
             selectedFestival = await FestivalRepository.GetByIdAsync(FestivalId);
-            await LoadLineUp();
+            SetBookingFromFestival();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (FestivalId != Guid.Empty)
+        {
+            selectedFestival = await FestivalRepository.GetByIdAsync(FestivalId);
+            SetBookingFromFestival();
         }
     }
 
@@ -101,51 +92,80 @@
 
     private async Task OnFestivalChanged(Festival? festival)
     {
-        selectedFestival = festival;
-        await LoadLineUp();
-        StateHasChanged();
-    }
+        if (festival == null)
+        {
+            selectedFestival = null;
+            bookingModel.FestivalId = Guid.Empty;
+            return;
+        }
 
-    private async Task LoadLineUp()
-    {
+        selectedFestival = allFestivals.FirstOrDefault(f => f.Id == festival.Id);
+
         if (selectedFestival != null)
         {
-            lineUp = await RepositoryBandFestival.GetBandsByFestivalIdAsync(selectedFestival.Id);
+            bookingModel.FestivalId = selectedFestival.Id;
+            SetBookingFromFestival();
         }
         else
         {
-            lineUp.Clear();
+            bookingModel.FestivalId = Guid.Empty;
         }
+
+        StateHasChanged();
     }
 
-    private bool CanBook => selectedFestival != null && !string.IsNullOrWhiteSpace(bookingModel.Email);
-
-    private async Task ConfirmBooking()
+    private void SetBookingFromFestival()
     {
         if (selectedFestival == null) return;
 
         bookingModel.FestivalId = selectedFestival.Id;
         bookingModel.StartDate = selectedFestival.StartDate ?? DateTime.Now;
         bookingModel.EndDate = selectedFestival.EndDate ?? DateTime.Now;
+        // Set other Booking properties from Festival as needed
+    }
+
+    private bool CanBook => selectedFestival != null && !string.IsNullOrWhiteSpace(bookingModel.Email);
+
+    private async Task ConfirmBooking()
+    {
+        Console.WriteLine("ConfirmBooking: Starting booking confirmation process...");
+
+        if (selectedFestival == null || !allFestivals.Any(f => f.Id == selectedFestival.Id))
+        {
+            Snackbar.Add("Selected festival does not exist.", Severity.Error);
+            Console.WriteLine("ConfirmBooking: Invalid festival selected.");
+            return;
+        }
+
+        // Check for existing booking
+        var existingBookings = await BookingRepository.GetAllAsync();
+        bool alreadyBooked = existingBookings.Any(b =>
+            b.FestivalId == selectedFestival.Id &&
+            string.Equals(b.Email, bookingModel.Email, StringComparison.OrdinalIgnoreCase));
+
+        if (alreadyBooked)
+        {
+            Snackbar.Add("You have already booked for this festival.", Severity.Warning);
+            Console.WriteLine("ConfirmBooking: Duplicate booking attempt.");
+            return;
+        }
+
+        Console.WriteLine($"ConfirmBooking: Booking for festival '{selectedFestival.Name}' ({selectedFestival.Id}) by '{bookingModel.Email}'.");
 
         await BookingRepository.AddASync(bookingModel);
+        Console.WriteLine("ConfirmBooking: Booking added to repository.");
+
         await BookingRepository.SaveChangesAsync(bookingModel);
+        Console.WriteLine("ConfirmBooking: Changes saved to database.");
+
         Snackbar.Add("Booking confirmed!", Severity.Success);
-        
+
         bookingModel = new MyApplication.Entities.Booking
         {
             Email = bookingModel.Email // preserve user email
         };
-        
-        NavigationManager.NavigateTo("/");
-    }
 
-    protected override async Task OnParametersSetAsync()
-    {
-        if (FestivalId != Guid.Empty)
-        {
-            selectedFestival = await FestivalRepository.GetByIdAsync(FestivalId);
-            await LoadLineUp();
-        }
+        Console.WriteLine("ConfirmBooking: Booking model reset. Navigating to home.");
+        NavigationManager.NavigateTo("/");
     }
 }
