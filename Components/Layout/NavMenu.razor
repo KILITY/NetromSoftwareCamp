@@ -14,6 +14,9 @@
             <MudMenuItem Href="FestivalManagement">
                 <MudIcon Icon="@Icons.Material.Filled.Build" Class="mr-2" /> Festival Management
             </MudMenuItem>
+            <MudMenuItem Href="BookingManagement">
+                <MudIcon Icon="@Icons.Material.Filled.Build" Class="mr-2" /> Booking Management
+            </MudMenuItem>
         </MudMenu>
     </AuthorizeView>
 
@@ -21,7 +24,7 @@
 
     <AuthorizeView>
         <Authorized>
-            <MudNavLink Href="Account/Manage" Class="px-2">
+            <MudNavLink Href="UserProfile" Class="px-2">
                 <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" />
                 @context.User.Identity?.Name
             </MudNavLink>

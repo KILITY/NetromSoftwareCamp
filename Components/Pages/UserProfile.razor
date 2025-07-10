@@ -1,0 +1,96 @@
+@page "/UserProfile"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using MyApplication.Entities
+@using MyApplication.Repositories
+@using MudBlazor
+@using MyApplication.Interfaces
+
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IRepositoryBooking RepositoryBooking
+@inject IRepositoryFestival RepositoryFestival
+
+<PageTitle>User Profile</PageTitle>
+
+<MudPaper Class="pa-8 mx-auto" MaxWidth="700px" Elevation="8" Color="Color.Surface">
+    <MudText Typo="Typo.h3" Align="Align.Center" Class="mb-4" Color="Color.Primary">User Profile</MudText>
+    @if (user is null)
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-4">
+            Unable to load user information.
+        </MudAlert>
+    }
+    else
+    {
+        <MudStack Spacing="2" Class="mb-4">
+            <MudText Typo="Typo.subtitle1"><b>Email:</b> @user.Email</MudText>
+            <MudText Typo="Typo.subtitle1"><b>Role:</b> @userRole</MudText>
+        </MudStack>
+        <MudDivider Class="my-4" />
+        <MudText Typo="Typo.h5" GutterBottom="true" Color="Color.Secondary">Your Bookings</MudText>
+        @if (userBookings is null || !userBookings.Any())
+        {
+            <MudText Color="Color.Info">No bookings found.</MudText>
+        }
+        else
+        {
+            <MudGrid Gutter="true">
+                @foreach (var booking in userBookings)
+                {
+                    var festival = festivals.FirstOrDefault(f => f.Id == booking.FestivalId);
+                    var imageUrl = !string.IsNullOrEmpty(festival?.URl)
+                        ? festival.URl
+                        : "https://via.placeholder.com/400x200?text=No+Image";
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Elevation="12" Class="mb-4" Style="border-radius: 18px; overflow: hidden;">
+                            <MudCardMedia Image="@imageUrl" Style="object-fit: cover; height: 160px" />
+                            <MudCardContent>
+                                <MudText Typo="Typo.h6" Class="mb-1" Color="Color.Primary"><b>@festival?.Name</b></MudText>
+                                <MudText Typo="Typo.body2" Class="mb-1" Color="Color.Secondary">
+                                    <MudIcon Icon="@Icons.Material.Filled.Event" Class="mr-1" />
+                                    @festival?.StartDate?.ToString("d") - @festival?.EndDate?.ToString("d")
+                                </MudText>
+                                <MudText Typo="Typo.body2" Class="mb-1">
+                                    <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Class="mr-1" />
+                                    <span style="font-weight:600;">@festival?.Price.ToString("N0")</span> RON
+                                </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    }
+</MudPaper>
+
+@code {
+    private ApplicationUser? user;
+    private string? userRole;
+    private List<Booking> userBookings = new();
+    private List<Festival> festivals = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var identityUser = authState.User;
+
+        if (identityUser.Identity is not { IsAuthenticated: true })
+        {
+            user = null;
+            return;
+        }
+
+        user = await UserManager.FindByNameAsync(identityUser.Identity.Name);
+        var roles = await UserManager.GetRolesAsync(user);
+        userRole = roles.FirstOrDefault() ?? "User";
+
+        if (!string.IsNullOrEmpty(user?.Email))
+        {
+            userBookings = (await RepositoryBooking.GetAllAsync())
+                .Where(b => b.Email.Equals(user.Email, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            festivals = (await RepositoryFestival.GetAllAsync()).ToList();
+        }
+    }
+}

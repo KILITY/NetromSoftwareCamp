@@ -1,0 +1,326 @@
+@page "/BookingManagement"
+@using MyApplication.Repositories
+@using MudBlazor
+@using MyApplication.Entities
+@using MyApplication.Interfaces
+@inject IRepositoryBooking RepositoryBooking
+@inject IRepositoryFestival RepositoryFestival
+@inject IDialogService DialogService
+
+<MudText Typo="Typo.h3" Align="Align.Center">Create Booking</MudText>
+
+<MudCard>
+    <MudForm @ref="form" Model="@Booking">
+        <MudCardContent>
+            <MudStack>
+                <MudSelect T="Festival" @bind-Value="SelectedFestival" Label="Festival" Required="true" RequiredError="Festival is required">
+                    @foreach (var fest in Festivals)
+                    {
+                        <MudSelectItem T="Festival" Value="@fest">@fest.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudTextField @bind-Value="Booking.Email" Label="Email" Required="true" RequiredError="Email is required" />
+                <MudDatePicker Label="Start Date" @bind-Date="BookingStartDate" Required="true" RequiredError="Start date is required" Min="@DateTime.Today" />
+                <MudDatePicker Label="End Date" @bind-Date="BookingEndDate" Required="true" RequiredError="End date is required" Min="@(BookingStartDate ?? DateTime.Today)" />
+                <MudButton Variant="Variant.Filled" @onclick="ValidateAndAddBooking">Create Booking</MudButton>
+            </MudStack>
+        </MudCardContent>
+    </MudForm>
+</MudCard>
+
+<MudText Typo="Typo.h3" Align="Align.Center">Booking Table</MudText>
+
+@if (!BookingsExist)
+{
+    <h4>There are no Bookings!</h4>
+}
+else
+{
+    @if (ShowAlert)
+    {
+        <MudAlert Severity="@AlertSeverity"
+                  Elevation="0"
+                  Dense="true"
+                  Variant="Variant.Filled"
+                  OnClose="() => ShowAlert = false">
+            @AlertMessage
+        </MudAlert>
+    }
+    <MudTable Items="@Bookings" Filter="@FilterFunction">
+        <ToolBarContent>
+            <MudTextField @bind-Value="_searchString" Placeholder="Search by Email" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Nr</MudTh>
+            <MudTh>Festival</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Start Date</MudTh>
+            <MudTh>End Date</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Nr">@context.Id</MudTd>
+            <MudTd DataLabel="Festival">
+                @if (EditingBooking == context)
+                {
+                    <MudSelect T="Festival" @bind-Value="EditingFestival" Immediate="true">
+                        @foreach (var fest in Festivals)
+                        {
+                            <MudSelectItem T="Festival" Value="@fest">@fest.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+                else
+                {
+                    @Festivals.FirstOrDefault(f => f.Id == context.FestivalId)?.Name
+                }
+            </MudTd>
+            <MudTd DataLabel="Email">
+                @if (EditingBooking == context)
+                {
+                    <MudTextField @bind-Value="context.Email" Immediate="true"/>
+                }
+                else
+                {
+                    @context.Email
+                }
+            </MudTd>
+            <MudTd DataLabel="Start Date">
+                @if (EditingBooking == context)
+                {
+                    <MudDatePicker @bind-Date="EditingBookingStartDate" Immediate="true"/>
+                }
+                else
+                {
+                    @context.StartDate.ToShortDateString()
+                }
+            </MudTd>
+            <MudTd DataLabel="End Date">
+                @if (EditingBooking == context)
+                {
+                    <MudDatePicker @bind-Date="EditingBookingEndDate" Immediate="true"/>
+                }
+                else
+                {
+                    @context.EndDate.ToShortDateString()
+                }
+            </MudTd>
+            <MudTd>
+                @if (EditingBooking == context)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Primary" OnClick="() => SaveEdit(context)"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Color="Color.Secondary" OnClick="CancelEdit"/>
+                }
+                else
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="() => StartEdit(context)"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => ShowDeleteConfirmationDialog(context)"/>
+                }
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private IEnumerable<Booking> Bookings = new List<Booking>();
+    private IEnumerable<Festival> Festivals = new List<Festival>();
+    private string? AlertMessage;
+    private Severity AlertSeverity;
+    private bool ShowAlert;
+    private bool BookingsExist = false;
+    private string _searchString = "";
+    private Booking? EditingBooking;
+    private Festival? EditingFestival;
+    private MudForm form;
+
+    // For create form
+    private DateTime? BookingStartDate { get; set; } = DateTime.Today;
+    private DateTime? BookingEndDate { get; set; } = DateTime.Today;
+
+    // For edit row
+    private DateTime? EditingBookingStartDate { get; set; }
+    private DateTime? EditingBookingEndDate { get; set; }
+
+    public Booking Booking { get; set; } = new Booking()
+    {
+        Email = string.Empty,
+        StartDate = DateTime.Today,
+        EndDate = DateTime.Today,
+    };
+
+    public Festival? SelectedFestival { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Festivals = (await RepositoryFestival.GetAllAsync()).ToList();
+        Bookings = (await RepositoryBooking.GetAllAsync()).ToList();
+        BookingsExist = Bookings.Any();
+    }
+
+    private bool FilterFunction(Booking booking)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+        return booking.Email.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task ValidateAndAddBooking()
+    {
+        await form.Validate();
+        bool festivalSelected = SelectedFestival != null;
+        bool datesValid = BookingStartDate.HasValue && BookingEndDate.HasValue &&
+                          BookingStartDate.Value >= DateTime.Today &&
+                          BookingEndDate.Value > BookingStartDate.Value;
+
+        if (form.IsValid && festivalSelected && datesValid)
+        {
+            var existing = Bookings.Any(b =>
+                b.FestivalId == SelectedFestival.Id &&
+                string.Equals(b.Email, Booking.Email, StringComparison.OrdinalIgnoreCase));
+            if (existing)
+            {
+                ShowAlert = true;
+                AlertMessage = "You have already booked this festival.";
+                AlertSeverity = Severity.Warning;
+                return;
+            }
+
+            Booking.FestivalId = SelectedFestival.Id;
+            Booking.StartDate = BookingStartDate.Value;
+            Booking.EndDate = BookingEndDate.Value;
+            await AddBooking();
+        }
+        else
+        {
+            string errorMessage = "Please fix the following:";
+            if (!form.IsValid)
+                errorMessage += " Fill in all required fields correctly.";
+            if (!festivalSelected)
+                errorMessage += " Select a festival.";
+            if (!datesValid)
+            {
+                if (!BookingStartDate.HasValue || BookingStartDate.Value < DateTime.Today)
+                    errorMessage += " Start date must be today or later.";
+                if (!BookingEndDate.HasValue || BookingEndDate.Value <= (BookingStartDate ?? DateTime.MinValue))
+                    errorMessage += " End date must be after start date.";
+            }
+            ShowAlert = true;
+            AlertMessage = errorMessage;
+            AlertSeverity = Severity.Warning;
+        }
+    }
+
+    private async Task AddBooking()
+    {
+        try
+        {
+            await RepositoryBooking.AddASync(Booking);
+            await RepositoryBooking.SaveChangesAsync(Booking);
+
+            ShowAlert = true;
+            AlertMessage = $"Created booking for '{Booking.Email}' successfully.";
+            AlertSeverity = Severity.Success;
+
+            Booking = new Booking() { Email = "", StartDate = DateTime.Today, EndDate = DateTime.Today };
+            BookingStartDate = DateTime.Today;
+            BookingEndDate = DateTime.Today;
+            SelectedFestival = null;
+            Bookings = (await RepositoryBooking.GetAllAsync()).ToList();
+            BookingsExist = Bookings.Any();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ShowAlert = true;
+            AlertMessage = $"Error adding booking: {ex.Message}";
+            AlertSeverity = Severity.Error;
+        }
+    }
+
+    private async Task DeleteBooking(Booking booking)
+    {
+        try
+        {
+            RepositoryBooking.Delete(booking);
+            await RepositoryBooking.SaveChangesAsync(booking);
+
+            ShowAlert = true;
+            AlertMessage = $"Deleted booking for '{booking.Email}' successfully.";
+            AlertSeverity = Severity.Success;
+
+            Bookings = (await RepositoryBooking.GetAllAsync()).ToList();
+            BookingsExist = Bookings.Any();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ShowAlert = true;
+            AlertMessage = $"Error deleting booking: {ex.Message}";
+            AlertSeverity = Severity.Error;
+        }
+    }
+
+    private void StartEdit(Booking booking)
+    {
+        EditingBooking = booking;
+        EditingFestival = Festivals.FirstOrDefault(f => f.Id == booking.FestivalId);
+        EditingBookingStartDate = booking.StartDate;
+        EditingBookingEndDate = booking.EndDate;
+    }
+
+    private void CancelEdit()
+    {
+        EditingBooking = null;
+        EditingFestival = null;
+        EditingBookingStartDate = null;
+        EditingBookingEndDate = null;
+    }
+
+    private async Task SaveEdit(Booking booking)
+    {
+        if (EditingFestival != null)
+            booking.FestivalId = EditingFestival.Id;
+        if (EditingBookingStartDate.HasValue)
+            booking.StartDate = EditingBookingStartDate.Value;
+        if (EditingBookingEndDate.HasValue)
+            booking.EndDate = EditingBookingEndDate.Value;
+
+        RepositoryBooking.Update(booking);
+        await RepositoryBooking.SaveChangesAsync(booking);
+
+        EditingBooking = null;
+        EditingFestival = null;
+        EditingBookingStartDate = null;
+        EditingBookingEndDate = null;
+
+        ShowAlert = true;
+        AlertMessage = $"Updated booking for '{booking.Email}' successfully.";
+        AlertSeverity = Severity.Success;
+
+        Bookings = (await RepositoryBooking.GetAllAsync()).ToList();
+        StateHasChanged();
+    }
+
+    private async Task ShowDeleteConfirmationDialog(Booking booking)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Are you sure you want to delete the booking for '{booking.Email}'?" }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = false,
+        };
+
+        var dialog = DialogService.Show<ConfirmDialog>("Confirm Delete", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteBooking(booking);
+        }
+    }
+}
