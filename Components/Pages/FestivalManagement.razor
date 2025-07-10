@@ -231,7 +231,9 @@ else
         var targetFestival = festival ?? Festival;
         var parameters = new DialogParameters
         {
-            { "FestivalId", targetFestival.Id != Guid.Empty ? targetFestival.Id : Guid.Empty }
+            { "FestivalId", targetFestival.Id != Guid.Empty ? targetFestival.Id : Guid.Empty },
+            { "StartDate", targetFestival.StartDate },
+            { "EndDate",  targetFestival.EndDate  }
         };
 
         var options = new DialogOptions

@@ -47,7 +47,9 @@
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
     [Parameter] public Guid FestivalId { get; set; }
-
+    [Parameter] public DateTime? StartDate { get; set; }
+    [Parameter] public DateTime? EndDate { get; set; }
+    
     private MudDropContainer<DropItem> _container;
     private List<DropItem> _dropzoneItems = new();
     private List<Band> _allBands = new();
@@ -107,7 +109,7 @@
             }
 
             // Initialize the drop zones
-            LoadData();
+            await LoadData();
             StateHasChanged();
             Console.WriteLine($"Loaded {_dropzoneItems.Count} items into drop zones");
             Console.WriteLine($"Available bands: {_dropzoneItems.Count(i => i.Selector == "1")}");
@@ -119,14 +121,19 @@
         }
     }
 
-    private void LoadData()
+    private async Task LoadData()
     {
         _dropzoneItems = new List<DropItem>();
+        var blockedIds = await RepositoryBandFestival
+            .GetBandIdsInDateRangeAsync(StartDate, EndDate, FestivalId);
 
         // Add bands that are not in the festival to the available list
         foreach (var band in _allBands)
         {
-            if (FestivalId == Guid.Empty || !_festivalBands.Any(bf => bf.BandId == band.Id))
+            bool inCurrentFestival = _festivalBands.Any(bf => bf.BandId == band.Id);
+            bool bookedElsewhere = blockedIds.Contains(band.Id);
+            
+            if ((FestivalId == Guid.Empty || !_festivalBands.Any(bf => bf.BandId == band.Id)) && !inCurrentFestival && !bookedElsewhere )
             {
                 _dropzoneItems.Add(new DropItem
                 {
