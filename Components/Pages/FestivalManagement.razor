@@ -9,6 +9,8 @@
 @inject IDialogService DialogService
 @inject IRepositoryBandFestival RepositoryBandFestival
 
+<div class="mud-container-wide">
+<div class="mud-paper">
 <MudText Typo="Typo.h3" Align="Align.Center">CreateFestival</MudText>
 
 <MudCard>
@@ -63,9 +65,9 @@
 }
 else
 {
-    <MudTable Rounded = "true" Items="@Festivals" Filter="@FilterFunction" >
+    <MudTable Rounded="true" Items="@Festivals" Filter="@FilterFunction">
         <ToolBarContent>
-            <MudTextField @bind-Value="_searchString" Placeholder="Search Festival" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
+            <MudTextField @bind-Value="_searchString" Placeholder="Search Festival" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"/>
         </ToolBarContent>
         <HeaderContent>
             <MudTh>Photo</MudTh>
@@ -78,16 +80,16 @@ else
             <MudTh>Line-Up</MudTh>
         </HeaderContent>
         <RowTemplate>
-            
+
             @if (EditingFestival == context)
             {
-                    <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
-                        <ActivatorContent>
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload"/>
-                                Upload Files
-                        </ActivatorContent>
-                    </MudFileUpload>
-                
+                <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload"/>
+                        Upload Files
+                    </ActivatorContent>
+                </MudFileUpload>
+
             }
             else
             {
@@ -97,7 +99,7 @@ else
                             <MudImage Src="@context.URl" Alt="Festival Image" Style="width: 50px; height: 50px; object-fit: cover;" Class="mud-image-rounded"/>
                         </ChildContent>
                         <TooltipContent>
-                            <MudImage Src="@context.URl" Alt="Festival Image Large Preview" Style="width: 300px; height: 300px; object-fit: cover;" Class="mud-image-rounded" />
+                            <MudImage Src="@context.URl" Alt="Festival Image Large Preview" Style="width: 300px; height: 300px; object-fit: cover;" Class="mud-image-rounded"/>
                         </TooltipContent>
                     </MudTooltip>
                 </MudTd>
@@ -123,7 +125,7 @@ else
                     @context.Description
                 }
             </MudTd>
-            
+
             <MudTd DataLabel="Location">
                 @if (EditingFestival == context)
                 {
@@ -134,7 +136,7 @@ else
                     @context.Location
                 }
             </MudTd>
-            
+
             <MudTd DataLabel="Price">
                 @if (EditingFestival == context)
                 {
@@ -145,29 +147,29 @@ else
                     @($"{context.Price} RON")
                 }
             </MudTd>
-            
+
             <MudTd DataLabel="StartDate">
                 @if (EditingFestival == context)
                 {
-                    <MudDatePicker Label="StartDate" @bind-Date="@context.StartDate" ShowToolbar="false" />
+                    <MudDatePicker Label="StartDate" @bind-Date="@context.StartDate" ShowToolbar="false"/>
                 }
                 else
                 {
                     @context.StartDate
                 }
             </MudTd>
-            
+
             <MudTd DataLabel="EndDate">
                 @if (EditingFestival == context)
                 {
-                    <MudDatePicker Label="EndDate" @bind-Date="@context.EndDate" ShowToolbar="false" />
+                    <MudDatePicker Label="EndDate" @bind-Date="@context.EndDate" ShowToolbar="false"/>
                 }
                 else
                 {
                     @context.EndDate
                 }
             </MudTd>
-            
+
             <MudTd>
                 @if (EditingFestival == context)
                 {
@@ -206,6 +208,8 @@ else
         </RowTemplate>
     </MudTable>
 }
+</div>
+</div>
 
 @code { 
     private IEnumerable<Festival> Festivals= new List<Festival>();

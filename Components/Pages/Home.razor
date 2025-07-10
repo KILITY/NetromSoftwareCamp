@@ -8,6 +8,8 @@
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
 
+<div class="mud-container-wide">
+<div class="mud-paper">
 <MudText Typo="Typo.h2">Suggested Festivals. Try Clicking One!</MudText>
 @if (Festivals != null && Festivals.Count > 0)
 {
@@ -50,7 +52,8 @@
         }
     </MudGrid>
     }
-}
+</div>
+</div>
 
 @code {
     List<Festival> Festivals { get; set; } = new();

@@ -8,6 +8,8 @@
 @inject IRepositoryBand RepositoryBand
 @inject IDialogService DialogService
 
+<div class="mud-container-wide">
+    <div class="mud-paper">
 <MudText Typo="Typo.h3" Align="Align.Center">Create Band</MudText>
 
 <MudCard>
@@ -97,6 +99,8 @@ else
         </RowTemplate>
     </MudTable>
 }
+    </div>
+</div>
 
 @code {
     private IEnumerable<Band> Bands = new List<Band>();

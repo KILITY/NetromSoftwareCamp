@@ -13,6 +13,7 @@
 
 <PageTitle>User Profile</PageTitle>
 
+<div class="mud-container-wide">
 <MudPaper Class="pa-8 mx-auto" MaxWidth="700px" Elevation="8" Color="Color.Surface">
     <MudText Typo="Typo.h3" Align="Align.Center" Class="mb-4" Color="Color.Primary">User Profile</MudText>
     @if (user is null)
@@ -55,6 +56,10 @@
                                     <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Class="mr-1" />
                                     <span style="font-weight:600;">@festival?.Price.ToString("N0")</span> RON
                                 </MudText>
+                                <MudButton Color="Color.Error" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Delete"
+                                           OnClick="@(() => DeleteBookingAsync(booking.Id))" Class="mt-2">
+                                    Cancel
+                                </MudButton>
                             </MudCardContent>
                         </MudCard>
                     </MudItem>
@@ -63,6 +68,7 @@
         }
     }
 </MudPaper>
+</div>
 
 @code {
     private ApplicationUser? user;
@@ -92,5 +98,13 @@
                 .ToList();
             festivals = (await RepositoryFestival.GetAllAsync()).ToList();
         }
+    }
+    
+    private async Task DeleteBookingAsync(Guid bookingId)
+    {
+        Booking bookentity = await RepositoryBooking.GetByIdAsync(bookingId);
+        RepositoryBooking.Delete(bookentity);
+        userBookings = userBookings.Where(b => b.Id != bookingId).ToList();
+        StateHasChanged();
     }
 }
